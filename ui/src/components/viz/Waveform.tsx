@@ -2,16 +2,9 @@ import { useEffect, useRef } from "react";
 import { BANDS, readLevels, useSystemAudio } from "../../player/levels";
 import { usePrefs } from "../../store/prefs";
 import { cn } from "../ui/cn";
+import type { VizStyle } from "./styles";
 
-export type VizStyle = "bars" | "smoke" | "memo" | "mirror" | "wave";
-
-export const VIZ_STYLES: { value: VizStyle; label: string }[] = [
-  { value: "bars", label: "Cava bars" },
-  { value: "smoke", label: "Ink smoke" },
-  { value: "memo", label: "Voice memo" },
-  { value: "mirror", label: "Mirror bars" },
-  { value: "wave", label: "Ink line" },
-];
+export { VIZ_STYLES, type VizStyle } from "./styles";
 
 export type WaveformOptions = {
   style?: VizStyle;

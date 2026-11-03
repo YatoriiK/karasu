@@ -11,6 +11,7 @@ import { Segmented, Slider, Toggle } from "../../components/ui/controls";
 import { cn } from "../../components/ui/cn";
 import { Choice, Group, Row } from "./ui";
 import { LookScope } from "./LookScope";
+import { ShareLook } from "./ShareLook";
 import { VIZ_STYLES } from "../../components/viz/Waveform";
 import { SCENES } from "../../components/visual/scenes";
 import { INK_MODES } from "../../theme/skins";
@@ -57,14 +58,31 @@ function Preview({ look, name, kanji, active, onClick }: { look: Look; name: str
 }
 
 function ColorRow({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  // The typed text lives here until it's a real color. Otherwise every half-typed "#ff0" snapped back
+  // to the old value and the box was impossible to edit.
+  const [draft, setDraft] = useState<string | null>(null);
+  const take = (raw: string) => {
+    const hex = raw.trim().replace(/^#?/, "#");
+    if (/^#[0-9a-fA-F]{6}$/.test(hex)) onChange(hex.toLowerCase());
+    else if (/^#[0-9a-fA-F]{3}$/.test(hex)) onChange(`#${[...hex.slice(1)].map((c) => c + c).join("")}`.toLowerCase());
+  };
   return (
     <label className="flex items-center gap-2 rounded-md bg-bg-3/60 px-2 py-1.5 hairline">
       <input type="color" value={value.startsWith("#") ? value.slice(0, 7) : "#000000"} onChange={(e) => onChange(e.target.value)} className="h-7 w-9 shrink-0 cursor-pointer rounded-sm bg-transparent" />
       <span className="min-w-0 flex-1">
         <span className="block text-[12.5px] text-fg-1">{label}</span>
         <input
-          value={value}
-          onChange={(e) => /^#[0-9a-fA-F]{6}$/.test(e.target.value) && onChange(e.target.value)}
+          value={draft ?? value}
+          onChange={(e) => {
+            setDraft(e.target.value);
+            if (e.target.value.replace(/^#?/, "").length === 6) take(e.target.value);
+          }}
+          onBlur={() => {
+            if (draft != null) take(draft);
+            setDraft(null);
+          }}
+          onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
+          spellCheck={false}
           className="w-full bg-transparent font-mono text-[11px] text-fg-3 outline-none"
           aria-label={`${label} hex`}
         />
@@ -179,6 +197,7 @@ export function LookEditor() {
             }}
           />
         </Row>
+        <ShareLook />
       </Group>
 
       <Group id="colors" title="Colors and surfaces">

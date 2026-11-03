@@ -47,7 +47,21 @@ function frameCss(s: ItemStyle, look: Look): CSSProperties {
     css.WebkitBackdropFilter = `blur(${blur}px)`;
   }
   if (s.font) css.fontFamily = fontStack(s.font);
-  if (s.color) css.color = s.color;
+  // Widgets color their text with the theme's --fg-* shades, so a plain `color` here never shows.
+  // Re-point the shades instead, and every label inside follows.
+  if (s.color) {
+    const ink = s.color;
+    Object.assign(css, {
+      color: ink,
+      "--ink": ink,
+      "--fg-0": ink,
+      "--fg-1": `color-mix(in srgb, ${ink} 84%, var(--surface))`,
+      "--fg-2": `color-mix(in srgb, ${ink} 70%, var(--surface))`,
+      "--fg-3": `color-mix(in srgb, ${ink} 58%, var(--surface))`,
+      "--line": `color-mix(in srgb, ${ink} 12%, transparent)`,
+      "--line-strong": `color-mix(in srgb, ${ink} 22%, transparent)`,
+    });
+  }
   return css;
 }
 
