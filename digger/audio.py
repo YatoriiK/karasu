@@ -97,6 +97,7 @@ def fetch_preview(ctx, dz_id, preview=None):
     return data
 
 
+# Least recently played previews go first. Trims to 90% so we're not back here after the next song.
 def prune_audio_cache(limit=AUDIO_CACHE_LIMIT):
     if not AUDIO_CACHE.exists():
         return 0

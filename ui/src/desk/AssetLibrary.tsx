@@ -138,7 +138,7 @@ export function AssetLibrary({
       </div>
       {!isLoading && !assets.length && (
         <p className="mt-2 text-[11px] leading-relaxed text-fg-3">
-          Import pictures you love — wallpapers, ink art, stickers, GIFs{videos ? ", short MP4 or WebM loops" : ""}. You can also drag files straight onto the desk.
+          Import pictures you love: wallpapers, ink art, stickers, GIFs{videos ? ", short MP4 or WebM loops" : ""}. You can also drag files straight onto the desk.
         </p>
       )}
       <input ref={input} type="file" accept={videos ? "image/*,video/mp4,video/webm" : "image/*"} multiple hidden onChange={(e) => upload(e.target.files)} />

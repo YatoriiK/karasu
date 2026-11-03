@@ -41,6 +41,7 @@ create table if not exists feedback(
 create table if not exists playlists(lane text primary key, sp_id text);
 """
 
+# Append only. Never edit an old entry, people's databases already ran it.
 MIGRATIONS = [
     """
     alter table dz_tracks add column md5 text;
@@ -118,6 +119,7 @@ class DB:
     def __init__(self, path=None):
         DATA.mkdir(parents=True, exist_ok=True)
         self.path = path or DATA / "music.db"
+        # SQLite connections don't like being shared between threads, so every thread gets its own.
         self._local = threading.local()
         self._all = []
         self._all_lock = threading.Lock()

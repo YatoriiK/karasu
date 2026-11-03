@@ -9,8 +9,8 @@ export type InkMode = SkinMode;
 export type { SkinEntry };
 
 export const INK_MODES: { value: InkMode; label: string; hint: string }[] = [
-  { value: "ink", label: "Ink", hint: "Dark strokes become ink in the look's color — great for black-on-white art" },
-  { value: "light", label: "Light ink", hint: "Light parts become ink — for white art on black" },
+  { value: "ink", label: "Ink", hint: "Dark strokes become ink in the look's color. Best for black-on-white art" },
+  { value: "light", label: "Light ink", hint: "Light parts become ink. For white art on black" },
   { value: "silhouette", label: "Silhouette", hint: "A solid shape in the ink color" },
   { value: "original", label: "Original", hint: "Show the picture exactly as it is" },
 ];

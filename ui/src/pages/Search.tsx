@@ -79,7 +79,7 @@ export function SearchPage() {
     staleTime: 300_000,
   });
   if (!q)
-    return <EmptyState icon={<SearchIcon size={22} />} title="Search for anything" body="Press Ctrl K anywhere to search songs, artists and albums — or describe a sound." />;
+    return <EmptyState icon={<SearchIcon size={22} />} title="Search for anything" body="Press Ctrl K anywhere to search songs, artists and albums, or describe a sound." />;
   return (
     <div className="pt-4">
       <div className="mb-7 flex flex-wrap items-center justify-between gap-4">

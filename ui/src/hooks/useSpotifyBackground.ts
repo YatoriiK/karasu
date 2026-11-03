@@ -49,7 +49,7 @@ export async function reconnectSpotify(onDone?: () => void) {
       startConnectPolling();
     }
     if (ready && usePrefs.getState().launchSpotify) void launchSpotify();
-    toast(s.login_error ? "Spotify sign-in failed" : ready ? "Spotify connected — full songs are on" : "Spotify connected", {
+    toast(s.login_error ? "Spotify sign-in failed" : ready ? "Spotify connected. Full songs are on" : "Spotify connected", {
       description: s.login_error ?? undefined,
     });
     onDone?.();

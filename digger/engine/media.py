@@ -21,6 +21,7 @@ KINDS = {
     "artist": "https://e-cdns-images.dzcdn.net/images/artist/{ref}/1000x1000-000000-80-0-0.jpg",
     "sp": "https://i.scdn.co/image/{ref}",
 }
+# md5 of Deezer's plain grey "no cover" image. When we get this one, we go look for real art elsewhere.
 BLANK_COVERS = {"f75ba0ba49d9cd2604be97e7b6964817"}
 BLANK_RETRY = 3600
 _locks = {}

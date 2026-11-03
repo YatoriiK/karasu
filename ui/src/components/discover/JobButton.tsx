@@ -21,7 +21,7 @@ export function JobButton({
     if (!job?.finished) return;
     if (job.status === "done") {
       const added = (job.result as { added?: number } | undefined)?.added;
-      toast(added ? `Found ${added} new songs to consider` : "Dug deeper — refreshed your results");
+      toast(added ? `Found ${added} new songs to consider` : "Dug deeper and refreshed your results");
       onDone();
     } else if (job.status === "error") {
       toast("Digging failed", { description: job.error });

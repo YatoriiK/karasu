@@ -33,6 +33,7 @@ SCOPE_LIST = [
 ]
 OPTIONAL_SCOPES = ["user-follow-read"]
 SCOPES = " ".join(SCOPE_LIST + OPTIONAL_SCOPES)
+# Karasu used to be called CrateDigger. Renaming this would log everyone out of Spotify, so it stays.
 KEYRING_SERVICE = "CrateDigger"
 KEYRING_USER = "spotify"
 FORM = {"Content-Type": "application/x-www-form-urlencoded"}

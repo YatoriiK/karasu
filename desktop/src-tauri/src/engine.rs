@@ -17,6 +17,7 @@ use windows_sys::Win32::System::JobObjects::{
 };
 
 pub const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+// Pinned on purpose. Bump the URL and the hash together, or the download gets refused.
 const UV_URL: &str = "https://github.com/astral-sh/uv/releases/download/0.13.1/uv-x86_64-pc-windows-msvc.zip";
 const UV_SHA256: &str = "3b2661a463a5baea7f5076ea2b25ab71d77f36a6c0d809e5350651792f80a672";
 const PYTHON: &str = "3.12";
@@ -82,6 +83,7 @@ fn hex(bytes: &[u8]) -> String {
     bytes.iter().map(|b| format!("{b:02x}")).collect()
 }
 
+// When an update changes requirements.txt, this hash changes too and the next launch installs what's new.
 fn stamp(code: &Path) -> String {
     let mut hash = Sha256::new();
     hash.update(UV_URL);
@@ -98,6 +100,7 @@ pub fn ready(home: &Path, code: &Path) -> bool {
     is_dev(home) || fs::read_to_string(home.join(".venv").join(STAMP)).is_ok_and(|s| s.trim() == stamp(code))
 }
 
+// nvidia-smi comes with the NVIDIA driver, so if it runs there's a card worth using.
 pub fn gpu() -> bool {
     static FOUND: OnceLock<bool> = OnceLock::new();
     *FOUND.get_or_init(|| {
@@ -121,6 +124,8 @@ pub fn free_bytes(path: &Path) -> Option<u64> {
     (ok != 0).then_some(free)
 }
 
+// Everything we start goes in one of these, so closing Karasu also kills a half-finished pip install
+// instead of leaving it running in the background.
 pub fn kill_on_close_job() -> Option<usize> {
     unsafe {
         let job = CreateJobObjectW(std::ptr::null(), std::ptr::null());
@@ -153,6 +158,7 @@ pub fn close_job(job: usize) {
     }
 }
 
+// Windows' own curl and tar, not whatever Git or MSYS2 put first on PATH.
 fn system_tool(name: &str) -> PathBuf {
     std::env::var_os("SystemRoot")
         .map(|root| PathBuf::from(root).join("System32").join(name))
@@ -354,6 +360,7 @@ pub fn install(home: &Path, code: &Path, emit: &dyn Fn(Progress)) -> Result<(), 
         deps.args(["pip", "install", "--python"]).arg(&py).arg("-r").arg(&requirements);
         run.run(deps, "Installing the engine")?;
 
+        // Loading the model once is the easiest way to make Transformers download exactly the files it needs.
         run.begin(5, "Downloading the audio model");
         let mut model = run.command(&py);
         model.args([

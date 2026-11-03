@@ -83,6 +83,7 @@ async def export():
 
 @router.post("/compare")
 async def compare(body: dict):
+    # Old name, kept so profile files people already exported still load.
     if body.get("format") != "cratedigger-profile":
         raise HTTPException(400, "That isn't a Karasu profile file")
     c = ctx()

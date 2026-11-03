@@ -57,6 +57,7 @@ const StatsPage = lazy(() => import("../pages/Stats").then((m) => ({ default: m.
 const ProfilePage = lazy(() => import("../pages/Profile").then((m) => ({ default: m.ProfilePage })));
 const WelcomePage = lazy(() => import("../pages/Welcome").then((m) => ({ default: m.WelcomePage })));
 
+// Lives outside the component so the welcome redirect happens once per launch, not on every remount.
 let firstRunChecked = false;
 
 function useFirstRun() {
@@ -167,6 +168,7 @@ function useEngineReady(active: boolean, logs: string | null) {
                 ? `${error.message}\n\nCheck ${logs ? `${logs}\\backend.log` : "backend.log in the data\\logs folder of Karasu's folder"}, then restart Karasu.`
                 : String(error),
           });
+        // The audio model takes a while to wake up: around 25 seconds on a GPU, longer on a CPU.
         } else if (waited > 6) {
           setState((s) => ({ ...s, status: "Warming up the audio model…" }));
         }

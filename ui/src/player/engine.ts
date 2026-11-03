@@ -203,7 +203,7 @@ export class PreviewEngine {
       await incoming.audio.play();
     } catch (error) {
       if ((error as Error).name !== "AbortError") {
-        this.emit({ type: "error", message: "Playback was blocked — press play.", track });
+        this.emit({ type: "error", message: "Playback was blocked. Press play.", track });
       }
     }
   }

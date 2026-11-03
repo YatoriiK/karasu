@@ -1,7 +1,7 @@
 [package]
 name = "karasu"
 version = "0.5.11"
-description = "Karasu — music discovery"
+description = "Karasu, a music discovery app"
 edition = "2021"
 license = "GPL-3.0-or-later"
 

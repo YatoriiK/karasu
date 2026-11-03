@@ -188,7 +188,7 @@ async def regenerate(draft: str):
     c = ctx()
     stored = G._load(c, draft)
     if not stored:
-        raise HTTPException(404, "draft expired — generate again")
+        raise HTTPException(404, "This draft expired. Generate it again.")
 
     def go():
         return G.generate(c, STATE.corpus, stored["params"], nonce=int(time.time() * 1000) % (2 ** 31))

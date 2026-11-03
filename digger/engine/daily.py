@@ -271,7 +271,7 @@ def challenge_status(ctx, corpus, date, spec):
         g = spec["genre"]
         label = F.LABELS.get(g, g)
         title, goal = f"Detour: {label.lower()}", 3
-        body = f"Play 3 {label.lower()} songs — a corner of music you rarely visit."
+        body = f"Play 3 {label.lower()} songs. It's a corner of music you rarely visit."
         action = {"label": f"Explore {label.lower()}", "to": f"/discover/genre?seed={g}&label={label}"}
         fac = F.load(ctx.db, dz_ids)
         j = F.INDEX.get(g)

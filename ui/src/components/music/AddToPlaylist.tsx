@@ -88,7 +88,7 @@ export function AddToPlaylist() {
                   </Button>
                 </div>
                 <div className="scroll-area mt-4 max-h-72 space-y-1">
-                  {own.length === 0 && <p className="py-6 text-center text-sm text-fg-3">No playlists yet — create your first one above.</p>}
+                  {own.length === 0 && <p className="py-6 text-center text-sm text-fg-3">No playlists yet. Make one above.</p>}
                   {own.map((p) => (
                     <button
                       key={p.id}

@@ -66,7 +66,7 @@ function MixTile({ mix }: { mix: NonNullable<Daily["mix"]> }) {
         <Eyebrow light icon={<AudioWaveform size={13} />}>Refreshed every morning</Eyebrow>
         <h3 className="mt-2 text-[34px] font-bold leading-none tracking-[-0.035em]">Daily Mix</h3>
         <p className="mt-2.5 max-w-md text-[14px] leading-relaxed text-white/75">
-          {mix.known} favorites and {mix.new} new finds, sequenced in gentle waves of energy — with {names.join(", ")} and more.
+          {mix.known} favorites and {mix.new} new finds that rise and fall in energy, with {names.join(", ")} and more.
         </p>
         <div className="mt-5 flex flex-wrap items-center gap-2">
           <Button
@@ -279,7 +279,7 @@ function ChallengeTile({ challenge }: { challenge: Challenge }) {
           <Eyebrow icon={<Target size={13} />}>Daily challenge</Eyebrow>
           <div className="mt-1.5 text-[20px] font-bold tracking-[-0.02em] text-fg-0">{challenge.title}</div>
           <div className="mt-0.5 text-[14px] text-fg-2">
-            {challenge.done ? "Done for today — nice digging. A new challenge arrives tomorrow." : challenge.body}
+            {challenge.done ? "Done for today. Nice digging. New challenge tomorrow." : challenge.body}
           </div>
           <div className="mt-1 text-xs text-fg-3">Counts plays here and in Spotify (Spotify plays show up within 30 minutes).</div>
         </div>

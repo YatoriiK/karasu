@@ -83,7 +83,7 @@ export function SearchPalette() {
                       autoFocus
                       value={text}
                       onValueChange={setText}
-                      placeholder="Songs, artists, albums — or describe a sound"
+                      placeholder="Songs, artists, albums, or describe a sound"
                       className="h-14 flex-1 bg-transparent text-[16px] text-fg-0 outline-none placeholder:text-fg-3"
                     />
                     <kbd className="rounded-md bg-bg-4 px-1.5 py-0.5 text-2xs font-semibold text-fg-2">Esc</kbd>

@@ -562,7 +562,7 @@ export function Desk() {
         <div className="pointer-events-none absolute inset-0 grid place-items-center">
           <div className="text-center font-mono text-sm text-fg-2">
             <Eye className="mx-auto mb-2" size={18} />
-            empty desk — add widgets and images from the panel
+            empty desk. add widgets and images from the panel
           </div>
         </div>
       )}

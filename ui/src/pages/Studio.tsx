@@ -220,7 +220,7 @@ export function StudioPage() {
     try {
       const r = await api.pushPlaylist(id);
       setSaved({ id, sp_id: r.sp_id });
-      toast(`In Spotify — ${r.matched} of ${r.total} songs found`, { action: { label: "Open", onClick: () => openExternal(`https://open.spotify.com/playlist/${r.sp_id}`) } });
+      toast(`In Spotify. Found ${r.matched} of ${r.total} songs`, { action: { label: "Open", onClick: () => openExternal(`https://open.spotify.com/playlist/${r.sp_id}`) } });
     } catch (e) {
       toast("Couldn't save to Spotify", { description: (e as Error).message });
     }
@@ -345,7 +345,7 @@ export function StudioPage() {
         <section className="min-w-0">
           {!result ? (
             <div className="grid min-h-[520px] place-items-center rounded-2xl border border-dashed border-line-strong">
-              <EmptyState icon={<Wand2 size={24} />} title="Your playlist appears here" body="Pick a song, an artist, a mood or a decade — or mix several — and press Generate." />
+              <EmptyState icon={<Wand2 size={24} />} title="Your playlist appears here" body="Pick a song, an artist, a mood or a decade (or mix a few), then press Generate." />
             </div>
           ) : (
             <motion.div key={result.draft} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: EASE }}>

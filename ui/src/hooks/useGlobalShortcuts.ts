@@ -66,6 +66,7 @@ const ALONE = /^(F\d{1,2}|Media\w+|AudioVolume\w+|Pause|ScrollLock|Insert)$/;
 export function keysFromEvent(e: KeyboardEvent): { keys: string | null; reason?: string } {
   if (MODIFIERS.has(e.key) || !e.code) return { keys: null };
   const mods = [e.ctrlKey && "Ctrl", e.altKey && "Alt", e.shiftKey && "Shift", e.metaKey && "Super"].filter(Boolean) as string[];
+  // A lone K as a global shortcut would eat every K you type in Discord. F-keys and media keys are fine.
   if (!mods.length && !ALONE.test(e.code)) {
     return { keys: null, reason: "Hold Ctrl, Alt or Shift too, so games and other apps still get that key." };
   }
@@ -118,6 +119,7 @@ export function useGlobalShortcuts() {
   useEffect(() => {
     if (!IN_TAURI) return;
     let alive = true;
+    // Let go of everything while recording, or pressing the new combo would also fire the old one.
     const list = enabled && !recording ? (Object.entries(bindings) as [GlobalAction, string][]).filter(([, keys]) => keys) : [];
     void (async () => {
       try {

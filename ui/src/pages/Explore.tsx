@@ -118,7 +118,7 @@ export function ExplorePage() {
       <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-[34px] font-bold tracking-[-0.03em]">Explore</h1>
-          <p className="mt-1 text-sm text-fg-2">Browse by genre, era and sound — everything ranked by how close it sits to your taste.</p>
+          <p className="mt-1 text-sm text-fg-2">Browse by genre, era and sound. Everything is ranked by how close it is to your taste.</p>
         </div>
         <Button variant="secondary" icon={<Dice5 size={16} />} onClick={random}>
           Random song
@@ -222,7 +222,7 @@ export function ExplorePage() {
       )}
 
       {trending && trending.length > 0 && (
-        <Section title="Trending discoveries" subtitle="What's charting on Deezer that you haven't heard — closest to your taste first">
+        <Section title="Trending discoveries" subtitle="What's charting on Deezer that you haven't heard, closest to your taste first">
           <Carousel>
             {trending.slice(0, 16).map((t) => (
               <TrackCard key={t.id} track={t} list={trending} context={{ label: "Trending discoveries" }} showReason={false} />

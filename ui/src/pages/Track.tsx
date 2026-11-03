@@ -119,7 +119,7 @@ export function TrackPage() {
       </TrackContextMenu>
       <Section
         title="Similar sounds"
-        subtitle={aspect === "overall" ? "Ranked by how close they sound, from artists you don't know yet" : "Approximate — estimated from 30-second previews"}
+        subtitle={aspect === "overall" ? "Ranked by how close they sound, from artists you don't know yet" : "Approximate, guessed from 30-second previews"}
         action={
           t.dz_id ? (
             <Segmented

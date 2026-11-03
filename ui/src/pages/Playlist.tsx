@@ -57,7 +57,7 @@ export function PlaylistPage() {
     setPushing(true);
     try {
       const res = await api.pushPlaylist(id);
-      toast(`Saved to Spotify — ${res.matched} of ${res.total} songs found`, {
+      toast(`Saved to Spotify. Found ${res.matched} of ${res.total} songs`, {
         action: { label: "Open", onClick: () => openExternal(`https://open.spotify.com/playlist/${res.sp_id}`) },
       });
       qc.invalidateQueries({ queryKey: ["playlist", id] });

@@ -75,7 +75,7 @@ export function useTrackActions() {
         });
         qc.invalidateQueries({ queryKey: ["home"] });
       }
-      if (kind === "down") toast("Got it — fewer songs like this");
+      if (kind === "down") toast("Got it, fewer songs like this");
     } catch (error) {
       patchTrackEverywhere(qc, track);
       toast("Couldn't save that", { description: (error as Error).message });

@@ -8,7 +8,7 @@ export function NotFound() {
     <EmptyState
       icon={<Disc3 size={22} />}
       title="This page skipped"
-      body="It doesn't exist — or it moved."
+      body="It doesn't exist, or it moved."
       action={
         <Link to="/">
           <Button variant="secondary">Back home</Button>

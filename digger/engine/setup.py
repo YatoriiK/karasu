@@ -5,10 +5,13 @@ from ..util import now_iso
 
 PICK_ARTIST = "pick:artist"
 PICK_TRACK = "pick:track"
+# Fewer than three artists and the taste model is basically guessing.
 MIN_PICKS = 3
 MAX_PICKS = 30
 TOP_PER_ARTIST = 12
 STARTER_ARTISTS = 40
+# These lean on MusicBrainz, which allows one request a second. Nobody wants to watch that
+# during setup, so they run in the background once the guide is done.
 LATER = ("tags", "genres")
 
 

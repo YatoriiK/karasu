@@ -113,7 +113,7 @@ export function SeedPicker({
                   </Command.Item>
                 ))}
               {data && !data.tracks.length && !data.artists.length && (
-                <div className="px-3 py-6 text-center text-sm text-fg-3">No matches in your library yet — try another name.</div>
+                <div className="px-3 py-6 text-center text-sm text-fg-3">No matches in your library yet. Try another name.</div>
               )}
             </Command.List>
           </Command>

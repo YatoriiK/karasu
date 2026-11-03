@@ -43,7 +43,7 @@ function EngineSlider({ s }: { s: { key: string; label: string; min: number; max
         onChange={setValue}
         onCommit={async (v) => {
           await api.setSetting(s.key, v);
-          toast("Saved — applies to the next discovery run");
+          toast("Saved. It applies to the next discovery run");
         }}
       />
       <span className="w-14 text-right text-sm text-fg-1 tabular">{value.toLocaleString()}</span>
@@ -341,7 +341,7 @@ export function SettingsPage() {
           </Row>
           <Row
             label="Preview cache"
-            hint={storage ? `${storage.audio.files.toLocaleString()} previews · ${bytes(storage.audio.bytes)} — downloaded again when needed` : "Checking…"}
+            hint={storage ? `${storage.audio.files.toLocaleString()} previews · ${bytes(storage.audio.bytes)}, downloaded again when needed` : "Checking…"}
           >
             <Button
               size="sm"

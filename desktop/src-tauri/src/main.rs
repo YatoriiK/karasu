@@ -57,6 +57,7 @@ struct Tuck {
 
 static TUCK: Mutex<Tuck> = Mutex::new(Tuck { on: false, since: None, hidden: Vec::new() });
 
+// A source checkout runs the engine straight from its own digger folder. Handy when you're hacking on it.
 fn code_dir(app: &tauri::AppHandle, home: &Path) -> PathBuf {
     if engine::is_dev(home) {
         return home.to_path_buf();
@@ -328,6 +329,7 @@ fn watch_spotify() {
         }
         if windows.is_empty() {
             missing += 1;
+            // 150 checks, 200 ms apart: 30 seconds with no Spotify window. It probably closed, so give up.
             if missing > 150 {
                 tuck.on = false;
                 tuck.hidden.clear();
@@ -336,6 +338,8 @@ fn watch_spotify() {
             continue;
         }
         missing = 0;
+        // Spotify really wants to be seen. Right after launch it keeps popping its window back up, so for
+        // 30 seconds we keep hiding it. After that, a visible window means you opened it yourself, and we back off.
         let fresh = tuck.since.is_some_and(|since| since.elapsed() < Duration::from_secs(30));
         for window in windows {
             let hwnd = window as HWND;

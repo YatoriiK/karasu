@@ -340,9 +340,9 @@ def mode_random(dc, limit, seed=None):
     far = -_z(taste)
     score = far + rng.normal(scale=0.9, size=len(taste))
     picks = _rank(dc, score, keep, limit, max_sim=0.85)
-    extra = {dz_id: [{"kind": "engine", "text": "Outside your usual sound — on purpose", "strength": 0.3}]
+    extra = {dz_id: [{"kind": "engine", "text": "Outside your usual sound, on purpose", "strength": 0.3}]
              for dz_id, _ in picks}
-    return payload(dc, picks, extra, {"title": "Surprise me", "subtitle": "Far from your usual — but chosen for quality"})
+    return payload(dc, picks, extra, {"title": "Surprise me", "subtitle": "Far from your usual, but still good"})
 
 
 def mode_era(dc, decade, novelty, limit):

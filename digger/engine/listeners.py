@@ -24,8 +24,10 @@ from .spotify_lib import image_art
 PAGE = "https://open.spotify.com/artist/{}"
 SETTING = "listeners.enabled"
 GEOCODE = "https://geocoding-api.open-meteo.com/v1/search"
+# Listener cities barely move week to week. Reading the page more often is just being rude to Spotify.
 FRESH = 7 * 86400
 RETRY = 3600
+# Chrome is hungry, so the hidden browser closes after 90 seconds with nothing to do.
 IDLE = 90
 WAIT = 1.2
 BROWSERS = [
@@ -433,6 +435,8 @@ def payload(ctx, artist, credits, title, row, status):
     }
 
 
+# Off for new installs. If there's already globe data, you were using it before it became opt-in,
+# so it stays on for you.
 def enabled(db):
     value = db.settings().get(SETTING)
     if value is not None:

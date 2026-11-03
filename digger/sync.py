@@ -147,6 +147,8 @@ def snapshot_saved(sp, db, pages=2):
     return len(saved)
 
 
+# Spotify's export can come as the whole ZIP or loose JSON files. Some of them start with a BOM,
+# hence utf-8-sig.
 def history_files(paths):
     for path in paths:
         if str(path).lower().endswith(".zip"):

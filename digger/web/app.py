@@ -102,6 +102,7 @@ def make_lifespan(context=None, background=True):
 
 def create_app(context=None, background=True):
     app = FastAPI(title="Karasu", lifespan=make_lifespan(context, background), docs_url=None, redoc_url=None)
+    # Only answer to 127.0.0.1 and localhost, so a random website can't DNS-rebind its way into your library.
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost", "testserver"])
     app.add_middleware(CORSMiddleware, allow_origins=ORIGINS, allow_methods=["*"], allow_headers=["*"],
                        allow_private_network=True, max_age=600)
@@ -137,6 +138,8 @@ def _parent_alive(pid):
         ctypes.windll.kernel32.CloseHandle(handle)
 
 
+# If the desktop app dies without saying goodbye, the engine notices within two seconds and quits
+# instead of haunting Task Manager.
 def _watch_parent(pid):
     while True:
         time.sleep(2)

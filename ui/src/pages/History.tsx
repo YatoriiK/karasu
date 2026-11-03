@@ -55,7 +55,7 @@ export function HistoryPage() {
       <header className="mb-7 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-[34px] font-bold tracking-[-0.03em]">History</h1>
-          <p className="mt-1 text-sm text-fg-2">Everything you've played — in Spotify and here.</p>
+          <p className="mt-1 text-sm text-fg-2">Everything you've played, in Spotify and here.</p>
         </div>
         <ImportHistoryButton />
       </header>

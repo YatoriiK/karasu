@@ -50,7 +50,7 @@ function Greeting({ data }: { data: Home }) {
               {m.toLowerCase()}
             </span>
           ))}
-          <span>mood{mood.genres.length ? ` — leaning ${mood.genres.join(" & ").toLowerCase()}` : ""}.</span>
+          <span>mood{mood.genres.length ? `, leaning ${mood.genres.join(" & ").toLowerCase()}` : ""}.</span>
         </motion.p>
       )}
     </header>

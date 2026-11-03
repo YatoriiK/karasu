@@ -17,7 +17,7 @@ _login = {"running": False, "error": None}
 _queue = {"gen": 0, "lock": threading.Lock()}
 QUEUE_NAME = "Karasu"
 QUEUE_NOTE = "Karasu plays your picks from here and refills it on its own."
-NO_DEVICE = "No Spotify device found — open Spotify on this PC or your phone."
+NO_DEVICE = "No Spotify device found. Open Spotify on this PC or your phone."
 
 
 @router.get("/spotify/status")
@@ -70,7 +70,7 @@ def _sp_call(fn):
         status_code = exc.status or 502
         body = exc.body or ""
         if "NO_ACTIVE_DEVICE" in body:
-            raise HTTPException(409, "No active Spotify device — open Spotify on this PC or your phone.")
+            raise HTTPException(409, "No active Spotify device. Open Spotify on this PC or your phone.")
         if "PREMIUM_REQUIRED" in body:
             raise HTTPException(403, "Spotify says this needs Premium.")
         if status_code == 403 and "scope" in body.lower():

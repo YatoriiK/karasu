@@ -374,7 +374,7 @@ export function DiscoverPage() {
             ) : (
               <EmptyState
                 icon={<Gem size={22} />}
-                title="Nothing matched — yet"
+                title="Nothing matched yet"
                 body="Karasu only knows the songs it has listened to. Dig deeper to explore around this pick."
               />
             )}
