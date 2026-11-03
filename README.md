@@ -98,7 +98,7 @@ Tests: `digger.cmd` sets up the environment, so run `.venv\Scripts\python -m pyt
 
 ## Support
 
-Karasu is free. If it found you something good, you can support it with the Sponsor button on this page.
+Karasu is free. If it found you something good, you can [buy me a coffee](https://buymeacoffee.com/karasuwrld).
 
 ## License
 
