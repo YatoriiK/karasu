@@ -1,0 +1,35 @@
+import { SHOTS } from "./paths.mjs";
+import { chromium } from "playwright";
+const base = process.env.CD_URL || "http://127.0.0.1:8766";
+const out = SHOTS;
+const browser = await chromium.launch({ channel: "chrome", headless: true });
+const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+const problems = [];
+page.on("pageerror", (e) => problems.push(`pageerror: ${e.message}`));
+let busy = true;
+let calls = 0;
+await page.route("**/api/lyrics/**", (route) => {
+  calls++;
+  if (busy) return route.fulfill({ json: { status: "busy", instrumental: false, plain: null, synced: null, source: "LRCLIB" } });
+  return route.fulfill({ json: { status: "ok", instrumental: false, plain: "first line\nsecond line", synced: null, source: "LRCLIB" } });
+});
+await page.addInitScript(() => {
+  localStorage.setItem("cd-prefs", JSON.stringify({ state: { systemAudio: false, launchSpotify: false, fullSongs: false }, version: 0 }));
+  localStorage.setItem("cd-player", JSON.stringify({ state: { source: "preview" }, version: 0 }));
+});
+await page.goto(`${base}/#/feed`, { waitUntil: "load" });
+await page.waitForTimeout(3500);
+await page.locator("main button[aria-label='Play']:not([disabled])").first().click({ force: true });
+await page.waitForTimeout(2500);
+await page.locator("button[aria-label='Lyrics']:visible").first().click();
+await page.waitForTimeout(1500);
+const busyShown = await page.getByText("The lyrics service is busy right now.").isVisible();
+await page.screenshot({ path: `${out}/lyrics-busy.png`, clip: { x: 720, y: 120, width: 640, height: 520 } });
+busy = false;
+await page.getByRole("button", { name: "Try again" }).click();
+await page.waitForTimeout(1200);
+const recovered = await page.getByText("second line").isVisible();
+await page.screenshot({ path: `${out}/lyrics-recovered.png`, clip: { x: 720, y: 120, width: 640, height: 520 } });
+console.log(JSON.stringify({ busyShown, recovered, calls }));
+console.log(problems.length ? problems.join("\n") : "no errors");
+await browser.close();

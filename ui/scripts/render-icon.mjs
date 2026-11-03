@@ -1,0 +1,10 @@
+import { ROOT } from "./paths.mjs";
+import { chromium } from "playwright";
+const browser = await chromium.launch({ channel: "chrome", headless: true });
+const page = await browser.newPage({ viewport: { width: 1024, height: 1024 } });
+await page.goto(`file:///${ROOT}/desktop/art/icon.html`);
+await page.evaluate(async () => { await document.fonts.load('600px "Yuji Syuku"', "烏"); await document.fonts.ready; });
+await page.waitForTimeout(500);
+await page.screenshot({ path: `${ROOT}/desktop/app-icon.png`, omitBackground: true });
+await browser.close();
+console.log("rendered");

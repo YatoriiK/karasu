@@ -1,0 +1,11 @@
+import { ROOT } from "./paths.mjs";
+import { chromium } from "playwright";
+const browser = await chromium.launch({ channel: "chrome", headless: true });
+const page = await browser.newPage({ viewport: { width: 400, height: 400 } });
+await page.goto(`file:///${ROOT}/desktop/art/installer.html`);
+await page.evaluate(async () => { await document.fonts.ready; });
+await page.waitForTimeout(600);
+await page.locator("#side").screenshot({ path: `${ROOT}/cache/tmp/installer-side.png` });
+await page.locator("#head").screenshot({ path: `${ROOT}/cache/tmp/installer-head.png` });
+await browser.close();
+console.log("ok");

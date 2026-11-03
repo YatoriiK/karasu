@@ -1,0 +1,25 @@
+import { ROOT } from "./paths.mjs";
+import { chromium } from "playwright";
+const base = process.env.CD_URL || "http://127.0.0.1:8766";
+const browser = await chromium.launch({ channel: "chrome", headless: true });
+const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+const log = [];
+page.on("request", (r) => r.url().includes("/api/") && !r.url().includes("/api/art/") && log.push(`→ ${r.method()} ${r.url().replace(base, "")}`));
+page.on("requestfinished", (r) => r.url().includes("/api/lyrics") && log.push(`✓ ${r.url().replace(base, "")}`));
+page.on("requestfailed", (r) => log.push(`✗ ${r.url().replace(base, "")} ${r.failure()?.errorText}`));
+page.on("console", (m) => m.type() === "error" && log.push(`console: ${m.text()}`));
+await page.addInitScript(() => {
+  localStorage.setItem("cd-prefs", JSON.stringify({ state: { systemAudio: false, launchSpotify: false, fullSongs: false }, version: 0 }));
+  localStorage.setItem("cd-player", JSON.stringify({ state: { source: "preview" }, version: 0 }));
+});
+await page.goto(`${base}/#/feed`, { waitUntil: "load" });
+await page.waitForTimeout(3500);
+await page.locator("main button[aria-label='Play']:not([disabled])").first().click({ force: true });
+await page.waitForTimeout(2500);
+await page.locator("button[aria-label='Lyrics']:visible").first().click();
+await page.waitForTimeout(6000);
+await page.screenshot({ path: `${ROOT}/cache/shots/lyrics.png` });
+const pending = await page.evaluate(() => performance.getEntriesByType("resource").filter((e) => e.name.includes("/api/lyrics")).map((e) => `${e.name.split("/api/")[1]} ${Math.round(e.duration)}ms`));
+console.log(log.filter((l) => /lyrics|audio|events|✗|console/.test(l)).join("\n"));
+console.log("perf:", pending);
+await browser.close();

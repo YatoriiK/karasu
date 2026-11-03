@@ -1,0 +1,25 @@
+# Your own data and settings. Never commit these.
+/config.toml
+/data/
+/cache/
+/runtime/
+/.venv/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Node and builds
+node_modules/
+/ui/dist/
+/ui/test-results/
+/desktop/src-tauri/target/
+/desktop/src-tauri/gen/
+/desktop/src-tauri/engine/
+
+# Editors and OS
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
