@@ -101,6 +101,19 @@ async function request<T>(method: string, path: string, body?: unknown, signal?:
   return response.json() as Promise<T>;
 }
 
+async function failure(response: Response) {
+  let message = response.statusText;
+  try {
+    const data = await response.json();
+    message = typeof data.detail === "string" ? data.detail : message;
+  } catch {
+    /* not json */
+  }
+  return new ApiError(response.status, message);
+}
+
+export type DeskPreview = { token: string; name: string; widgets: number; pictures: number; bytes: number; css: boolean };
+
 export const get = <T,>(path: string, signal?: AbortSignal) => request<T>("GET", path, undefined, signal);
 export const post = <T,>(path: string, body?: unknown) => request<T>("POST", path, body ?? {});
 export const put = <T,>(path: string, body?: unknown) => request<T>("PUT", path, body ?? {});
@@ -229,6 +242,27 @@ export const api = {
     }
     return (await response.json()) as Asset;
   },
+  exportDesk: async (id: number, look: unknown) => {
+    const response = await fetch(`${API_BASE}/api/layouts/${id}/export`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ look }),
+    }).catch(() => null);
+    if (!response) throw new ApiError(0, "Can't reach the Karasu engine.");
+    if (!response.ok) throw await failure(response);
+    const named = /filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i.exec(response.headers.get("content-disposition") ?? "");
+    const name = named ? decodeURIComponent(named[1] ?? named[2]) : "desk.karasu";
+    return { blob: await response.blob(), name };
+  },
+  previewDesk: async (file: Blob) => {
+    const response = await fetch(`${API_BASE}/api/layouts/import`, { method: "POST", headers: { "Content-Type": "application/zip" }, body: file }).catch(
+      () => null,
+    );
+    if (!response) throw new ApiError(0, "Can't reach the Karasu engine.");
+    if (!response.ok) throw await failure(response);
+    return (await response.json()) as DeskPreview;
+  },
+  importDesk: (token: string, css: boolean) => post<Layout>(`/api/layouts/import/${q(token)}?css=${css}`),
   fetchInfo: () => get<FetchInfo>("/api/fetch"),
   storage: () =>
     get<{ audio: { files: number; bytes: number }; art: { files: number; bytes: number }; database: number; location: string }>("/api/storage"),

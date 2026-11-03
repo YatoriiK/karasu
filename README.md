@@ -15,7 +15,8 @@ Everything runs locally. There is no Karasu server and no account.
 - **Explore**: genres and filters for year, popularity, mood, energy, tempo and instruments.
 - **Stats and Profile**: listening recaps, streaks, a map of your taste, and how it changed over time.
 - **A desk you arrange yourself**: widgets, wallpapers, themes, weather, cursors and your own images.
-  Share your look with a short `KARASU-…` code, and paste a friend's to try theirs.
+  Share your look with a short `KARASU-…` code, and paste a friend's to try theirs. To send a whole desk,
+  pictures and stickers included, export it as a `.karasu` file.
 - **Player**: plays full songs through your Spotify app in the background, or 30-second previews without it.
   Synced lyrics, queue, global media keys that work in games.
 

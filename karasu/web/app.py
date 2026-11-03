@@ -15,7 +15,7 @@ from .. import ROOT
 from ..audio import prune_audio_cache, release_shared
 from ..engine.corpus import Corpus
 from ..engine.jobs import EventBus, JobManager
-from .routers import catalog, daily, discover, insight, library, media, player, setup, system, workspace
+from .routers import catalog, daily, deskfile, discover, insight, library, media, player, setup, system, workspace
 from .state import STATE
 
 DIST = ROOT / "ui" / "dist"
@@ -106,7 +106,7 @@ def create_app(context=None, background=True):
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost", "testserver"])
     app.add_middleware(CORSMiddleware, allow_origins=ORIGINS, allow_methods=["*"], allow_headers=["*"],
                        allow_private_network=True, max_age=600)
-    for module in (system, catalog, daily, library, media, discover, player, insight, workspace, setup):
+    for module in (system, catalog, daily, library, media, discover, player, insight, deskfile, workspace, setup):
         app.include_router(module.router)
 
     @app.get("/{path:path}", include_in_schema=False)

@@ -13,6 +13,8 @@ import { focus, placed } from "./wallpaperFit";
 export function useWallpaper() {
   const layout = useActiveLayout();
   const look = useLook((s) => s.look.wallpaper);
+  // Same rule as the Settings page: a desk with its own look uses that look's wallpaper.
+  if (layout?.data.look) return look;
   return layout?.data.wallpaper ?? look;
 }
 

@@ -1,5 +1,5 @@
-import { useRef, useState } from "react";
-import { Download, Trash2, Upload } from "lucide-react";
+import { useState } from "react";
+import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { FONTS, fxOf, PRESETS, useLook, type Fx, type Look, type Wallpaper } from "../../theme/look";
 import { useActiveLayout, useDesk } from "../../desk/store";
@@ -12,6 +12,7 @@ import { cn } from "../../components/ui/cn";
 import { Choice, Group, Row } from "./ui";
 import { LookScope } from "./LookScope";
 import { ShareLook } from "./ShareLook";
+import { ShareDesk } from "./ShareDesk";
 import { VIZ_STYLES } from "../../components/viz/Waveform";
 import { SCENES } from "../../components/visual/scenes";
 import { INK_MODES } from "../../theme/skins";
@@ -117,20 +118,11 @@ function FontChoice({ label, value, onChange }: { label: string; value: string; 
   );
 }
 
-function download(name: string, text: string) {
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob([text], { type: "application/json" }));
-  a.download = name;
-  a.click();
-  window.setTimeout(() => URL.revokeObjectURL(a.href), 2000);
-}
-
 export function LookEditor() {
-  const { look, saved, set, setWallpaper, setFx, usePreset, useSaved, save, remove, replace } = useLook();
+  const { look, saved, set, setWallpaper, setFx, usePreset, useSaved, save, remove } = useLook();
   const prefs = usePrefs();
   const fx = fxOf(look);
   const [name, setName] = useState("");
-  const file = useRef<HTMLInputElement>(null);
   const layout = useActiveLayout();
   const deskWall = !layout?.data.look && layout?.data.wallpaper ? layout.data.wallpaper : null;
   const wp = deskWall ?? look.wallpaper;
@@ -171,33 +163,9 @@ export function LookEditor() {
           >
             Save
           </Button>
-          <Button size="sm" variant="ghost" icon={<Download size={14} />} onClick={() => download("karasu-look.json", JSON.stringify({ format: "karasu-look", version: 1, look }, null, 2))}>
-            Export
-          </Button>
-          <Button size="sm" variant="ghost" icon={<Upload size={14} />} onClick={() => file.current?.click()}>
-            Import
-          </Button>
-          <input
-            ref={file}
-            type="file"
-            accept="application/json,.json"
-            hidden
-            onChange={async (e) => {
-              const f = e.target.files?.[0];
-              e.target.value = "";
-              if (!f) return;
-              try {
-                const parsed = JSON.parse(await f.text());
-                if (!parsed.look?.ink) throw new Error("This isn't a Karasu look file");
-                replace(parsed.look);
-                toast("Look imported");
-              } catch (error) {
-                toast("Couldn't import that look", { description: (error as Error).message });
-              }
-            }}
-          />
         </Row>
         <ShareLook />
+        <ShareDesk />
       </Group>
 
       <Group id="colors" title="Colors and surfaces">
