@@ -1,7 +1,7 @@
 import time
 
-from digger.engine import search as S
-from digger.engine.backfill import rebuild_search_index
+from karasu.engine import search as S
+from karasu.engine.backfill import rebuild_search_index
 
 
 def seed(db):

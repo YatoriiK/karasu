@@ -3,12 +3,12 @@ import json
 import numpy as np
 import pytest
 
-from digger.audio import model_name
-from digger.engine import daily as D
-from digger.engine import facets as F
-from digger.engine.corpus import Corpus
-from digger.engine.insight import compare, export_profile, profile, stats
-from digger.util import norm_artist, now_iso
+from karasu.audio import model_name
+from karasu.engine import daily as D
+from karasu.engine import facets as F
+from karasu.engine.corpus import Corpus
+from karasu.engine.insight import compare, export_profile, profile, stats
+from karasu.util import norm_artist, now_iso
 
 N_LIB = 60
 N_NEW = 240

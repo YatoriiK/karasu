@@ -67,7 +67,7 @@ git clone <this repo> Karasu
 cd Karasu
 setup.cmd                      :: Python environment (picks the GPU build of PyTorch if it finds an NVIDIA card)
 cd ui && npm install && npm run build && cd ..
-digger.cmd serve               :: engine + UI at http://127.0.0.1:8765
+karasu.cmd serve               :: engine + UI at http://127.0.0.1:8765
 ```
 
 Desktop app and installer:
@@ -77,24 +77,24 @@ cd desktop && npm install && npm run build
 ```
 
 The installer lands in `cache\cargo-target\x86_64-pc-windows-gnu\release\bundle\nsis\`. A checkout that
-contains the `digger` folder runs the engine straight from source, so the desktop app built here uses your
+contains the `karasu` folder runs the engine straight from source, so the desktop app built here uses your
 working copy. Point it there once by setting the `KARASU_HOME` environment variable to the checkout.
 
-Tests: `digger.cmd` sets up the environment, so run `.venv\Scripts\python -m pytest` for the engine and
+Tests: `karasu.cmd` sets up the environment, so run `.venv\Scripts\python -m pytest` for the engine and
 `npm run typecheck` in `ui`. The scripts in `ui\scripts` are Playwright checks that drive a running engine.
 
 ### Command line
 
 | Command | What it does |
 |---|---|
-| `digger.cmd serve` | Starts the engine and serves the UI at http://127.0.0.1:8765 |
-| `digger.cmd doctor` | Checks Python, PyTorch, keys and connections |
-| `digger.cmd auth` | Logs in to Spotify |
-| `digger.cmd run` | Weekly run: sync, discover, update the two Spotify playlists |
-| `digger.cmd recommend` | Same, but only writes an HTML report |
-| `digger.cmd snapshot` | Logs recent plays (Spotify only keeps your last 50) |
-| `digger.cmd history <files>` | Imports Spotify's extended streaming history (ZIP or JSON) |
-| `digger.cmd schedule` | Weekly run and daily snapshot in Task Scheduler; `--remove` undoes it |
+| `karasu.cmd serve` | Starts the engine and serves the UI at http://127.0.0.1:8765 |
+| `karasu.cmd doctor` | Checks Python, PyTorch, keys and connections |
+| `karasu.cmd auth` | Logs in to Spotify |
+| `karasu.cmd run` | Weekly run: sync, discover, update the two Spotify playlists |
+| `karasu.cmd recommend` | Same, but only writes an HTML report |
+| `karasu.cmd snapshot` | Logs recent plays (Spotify only keeps your last 50) |
+| `karasu.cmd history <files>` | Imports Spotify's extended streaming history (ZIP or JSON) |
+| `karasu.cmd schedule` | Weekly run and daily snapshot in Task Scheduler; `--remove` undoes it |
 
 ## Support
 

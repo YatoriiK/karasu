@@ -1,7 +1,7 @@
 import numpy as np
 
-from digger.engine.flow import adjacent_same_artist, curve, order, tempo_gap
-from digger.engine.home import split_reason
+from karasu.engine.flow import adjacent_same_artist, curve, order, tempo_gap
+from karasu.engine.home import split_reason
 
 
 def test_curves():

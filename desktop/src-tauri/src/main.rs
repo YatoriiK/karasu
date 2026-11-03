@@ -57,7 +57,7 @@ struct Tuck {
 
 static TUCK: Mutex<Tuck> = Mutex::new(Tuck { on: false, since: None, hidden: Vec::new() });
 
-// A source checkout runs the engine straight from its own digger folder. Handy when you're hacking on it.
+// A source checkout runs the engine straight from its own karasu folder. Handy when you're hacking on it.
 fn code_dir(app: &tauri::AppHandle, home: &Path) -> PathBuf {
     if engine::is_dev(home) {
         return home.to_path_buf();
@@ -95,7 +95,7 @@ fn spawn_backend(home: &Path, code: &Path) -> std::io::Result<Child> {
     let err = out.try_clone()?;
     let cache = home.join("cache");
     Command::new(python)
-        .args(["-m", "digger", "serve", "--parent-pid", &std::process::id().to_string()])
+        .args(["-m", "karasu", "serve", "--parent-pid", &std::process::id().to_string()])
         .current_dir(home)
         .env("KARASU_HOME", home)
         .env("PYTHONPATH", code)

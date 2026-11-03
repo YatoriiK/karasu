@@ -2,7 +2,7 @@ import { SHOTS } from "./paths.mjs";
 import { chromium } from "playwright";
 import { mkdirSync } from "node:fs";
 
-const base = process.env.CD_URL || "http://127.0.0.1:8765";
+const base = process.env.KARASU_URL || "http://127.0.0.1:8765";
 const out = SHOTS;
 const only = process.argv.slice(2);
 mkdirSync(out, { recursive: true });
@@ -30,24 +30,24 @@ const routes = [
 
 const viewports = [
   { tag: "desktop", width: 1440, height: 900 },
-  ...(process.env.CD_MOBILE === "0" ? [] : [{ tag: "mobile", width: 390, height: 844 }]),
+  ...(process.env.KARASU_MOBILE === "0" ? [] : [{ tag: "mobile", width: 390, height: 844 }]),
 ];
 
 const browser = await chromium.launch({ channel: "chrome", headless: true });
 const problems = [];
 for (const vp of viewports) {
   const page = await browser.newPage({ viewport: { width: vp.width, height: vp.height }, deviceScaleFactor: 1 });
-  if (process.env.CD_THEME) {
+  if (process.env.KARASU_THEME) {
     await page.addInitScript((theme) => {
       localStorage.setItem("cd-prefs", JSON.stringify({ state: { theme }, version: 0 }));
-    }, process.env.CD_THEME);
+    }, process.env.KARASU_THEME);
   }
   page.on("console", (m) => m.type() === "error" && problems.push(`[${vp.tag}] console: ${m.text()}`));
   page.on("pageerror", (e) => problems.push(`[${vp.tag}] pageerror: ${e.message}`));
   for (const [name, path] of routes) {
     await page.goto(base + path, { waitUntil: "load", timeout: 30000 }).catch((e) => problems.push(`goto ${name}: ${e.message}`));
     await page.waitForTimeout({ vibe: 9000, profile: 8000, explore: 5000, stats: 3500, home: 6000 }[name] ?? 2200);
-    await page.screenshot({ path: `${out}/${vp.tag}${process.env.CD_THEME ? "-" + process.env.CD_THEME : ""}-${name}.png` });
+    await page.screenshot({ path: `${out}/${vp.tag}${process.env.KARASU_THEME ? "-" + process.env.KARASU_THEME : ""}-${name}.png` });
   }
   if (vp.tag === "desktop" && (!only.length || only.includes("extras"))) {
     await page.goto(base + "/#/feed", { waitUntil: "load" });

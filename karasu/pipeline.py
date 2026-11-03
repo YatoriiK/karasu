@@ -134,7 +134,7 @@ def recommend(ctx, dry_run=False, seed_names=None, sync=True, lanes=("fresh", "l
     ctx.log(f"  {len(taste.seed_ids)} seed tracks embedded, {len(taste.modes)} taste modes, "
             f"{len(taste.tags)} Last.fm tags, {len(taste.mb_tags)} MusicBrainz tags")
     if not taste.artists:
-        raise RuntimeError("No seed artists found. Run `digger sync` first or pass --seeds.")
+        raise RuntimeError("No seed artists found. Run `karasu.cmd sync` first or pass --seeds.")
     ctx.log("Crawling similar artists")
     g = crawl(ctx, taste, log=ctx.log)
     counts["graph artists"] = len(g.names)

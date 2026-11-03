@@ -2,8 +2,8 @@ import json
 
 import numpy as np
 
-from digger import learn
-from digger.resolve import deezer_artist
+from karasu import learn
+from karasu.resolve import deezer_artist
 
 
 class LFMOff:

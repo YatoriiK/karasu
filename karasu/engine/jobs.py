@@ -9,7 +9,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from ..util import now_iso
 
-log = logging.getLogger("digger")
+log = logging.getLogger("karasu")
 
 
 class Cancelled(Exception):

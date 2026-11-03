@@ -65,7 +65,7 @@ def cmd_doctor(args):
     if ctx.sp.configured and ctx.sp.has_login():
         checks.append(("Spotify", lambda: f"logged in as {ctx.sp.me().get('display_name')}"))
     elif ctx.sp.configured:
-        line(None, "Spotify", "not logged in yet, run: digger auth")
+        line(None, "Spotify", "not logged in yet, run: karasu.cmd auth")
     for name, fn in checks:
         try:
             line(True, name, fn())
@@ -188,7 +188,7 @@ def cmd_backfill(args):
 def cmd_schedule(args):
     script = SCHEDULE_PS.replace("{root}", str(ROOT))
     if args.remove:
-        names = ["Karasu weekly", "Karasu daily snapshot", "CrateDigger weekly", "CrateDigger daily snapshot"]
+        names = ["Karasu weekly", "Karasu daily snapshot"]
         script = "; ".join(f"Unregister-ScheduledTask -TaskName '{n}' -Confirm:$false -ErrorAction SilentlyContinue"
                            for n in names) + "; 'removed'"
     result = subprocess.run(["powershell", "-NoProfile", "-Command", script], capture_output=True, text=True)
@@ -210,7 +210,7 @@ def cmd_eval(args):
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(prog="digger", description="Karasu: local music discovery")
+    parser = argparse.ArgumentParser(prog="karasu", description="Karasu: local music discovery")
     sub = parser.add_subparsers(dest="cmd", required=True)
     sub.add_parser("doctor").set_defaults(fn=cmd_doctor)
     sub.add_parser("auth").set_defaults(fn=cmd_auth)

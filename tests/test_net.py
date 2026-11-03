@@ -1,8 +1,8 @@
 import httpx
 import pytest
 
-from digger import net as netmod
-from digger.net import Net, QuotaExceeded, inspect
+from karasu import net as netmod
+from karasu.net import Net, QuotaExceeded, inspect
 
 
 def resp(status=200, payload=None, headers=None):

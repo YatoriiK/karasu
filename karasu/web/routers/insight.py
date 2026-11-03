@@ -84,7 +84,7 @@ async def export():
 @router.post("/compare")
 async def compare(body: dict):
     # Old name, kept so profile files people already exported still load.
-    if body.get("format") != "cratedigger-profile":
+    if body.get("format") != "karasu-profile":
         raise HTTPException(400, "That isn't a Karasu profile file")
     c = ctx()
     return await asyncio.to_thread(I.compare, c, STATE.corpus, body)

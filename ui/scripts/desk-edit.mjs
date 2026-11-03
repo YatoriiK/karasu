@@ -1,7 +1,7 @@
 import { SHOTS } from "./paths.mjs";
 import { chromium } from "playwright";
 
-const base = process.env.CD_URL || "http://127.0.0.1:8765";
+const base = process.env.KARASU_URL || "http://127.0.0.1:8765";
 const out = SHOTS;
 const api = async (method, path, body) => {
   const r = await fetch(base + path, { method, headers: { "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined });

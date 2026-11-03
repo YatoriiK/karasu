@@ -3,10 +3,10 @@ import asyncio
 import pytest
 from fastapi import HTTPException
 
-from digger.sources.discogs import Discogs
-from digger.sources.lastfm import LastFM
-from digger.web.routers import system as R
-from digger.web.state import STATE
+from karasu.sources.discogs import Discogs
+from karasu.sources.lastfm import LastFM
+from karasu.web.routers import system as R
+from karasu.web.state import STATE
 
 LASTFM_KEY = "0123456789abcdef0123456789abcdef"
 

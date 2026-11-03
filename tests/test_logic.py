@@ -2,12 +2,12 @@ from datetime import timedelta
 
 import numpy as np
 
-from digger import gates
-from digger.lanes import Cand, classify, label_matches, map_styles, _discogs_title
-from digger.score import compute
-from digger.select import select
-from digger.taste import Taste
-from digger.util import norm_artist, now
+from karasu import gates
+from karasu.lanes import Cand, classify, label_matches, map_styles, _discogs_title
+from karasu.score import compute
+from karasu.select import select
+from karasu.taste import Taste
+from karasu.util import norm_artist, now
 
 
 def cand(lane="fresh", source="graph", dz_id=1, title="Song", artist="Artist", **kw):

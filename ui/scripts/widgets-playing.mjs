@@ -1,6 +1,6 @@
 import { SHOTS } from "./paths.mjs";
 import { chromium } from "playwright";
-const base = process.env.CD_URL || "http://127.0.0.1:8766";
+const base = process.env.KARASU_URL || "http://127.0.0.1:8766";
 const out = SHOTS;
 const browser = await chromium.launch({ channel: "chrome", headless: true, args: ["--autoplay-policy=no-user-gesture-required"] });
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });

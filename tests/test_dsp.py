@@ -1,6 +1,6 @@
 import numpy as np
 
-from digger.engine.dsp import features
+from karasu.engine.dsp import features
 
 SR = 48000
 

@@ -1,4 +1,4 @@
-from digger.util import (is_filler, is_junk, is_variant, norm_artist, norm_title, percentile_ranks, track_key,
+from karasu.util import (is_filler, is_junk, is_variant, norm_artist, norm_title, percentile_ranks, track_key,
                          year_of)
 
 

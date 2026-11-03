@@ -3,10 +3,10 @@ import io
 import pytest
 from PIL import Image, ImageDraw
 
-from digger.engine import media
-from digger.engine.media import parse_lrc
-from digger.web.routers import system
-from digger.web.state import STATE
+from karasu.engine import media
+from karasu.engine.media import parse_lrc
+from karasu.web.routers import system
+from karasu.web.state import STATE
 
 
 def _jpeg(size, background, shape=None, **style):

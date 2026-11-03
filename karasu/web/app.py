@@ -21,7 +21,7 @@ from .state import STATE
 DIST = ROOT / "ui" / "dist"
 ORIGINS = ["http://tauri.localhost", "https://tauri.localhost", "tauri://localhost",
            "http://localhost:5173", "http://127.0.0.1:5173"]
-log = logging.getLogger("digger")
+log = logging.getLogger("karasu")
 
 
 def _snapshot(jc):

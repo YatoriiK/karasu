@@ -33,8 +33,7 @@ SCOPE_LIST = [
 ]
 OPTIONAL_SCOPES = ["user-follow-read"]
 SCOPES = " ".join(SCOPE_LIST + OPTIONAL_SCOPES)
-# Karasu used to be called CrateDigger. Renaming this would log everyone out of Spotify, so it stays.
-KEYRING_SERVICE = "CrateDigger"
+KEYRING_SERVICE = "Karasu"
 KEYRING_USER = "spotify"
 FORM = {"Content-Type": "application/x-www-form-urlencoded"}
 DONE_PAGE = (
@@ -175,10 +174,10 @@ class Spotify:
     def _refresh(self):
         raw = keyring.get_password(KEYRING_SERVICE, KEYRING_USER)
         if not raw:
-            raise AuthError("Not logged in to Spotify. Run: digger auth")
+            raise AuthError("Not logged in to Spotify. Run: karasu.cmd auth")
         saved = json.loads(raw)
         if saved.get("client_id") != self.client_id:
-            raise AuthError("spotify.client_id changed since login. Run: digger auth")
+            raise AuthError("spotify.client_id changed since login. Run: karasu.cmd auth")
         try:
             token = self.net.request("POST", TOKEN_URL, headers=FORM, data={
                 "grant_type": "refresh_token",
@@ -187,7 +186,7 @@ class Spotify:
             })
         except NetError as exc:
             if "invalid_grant" in str(exc) or "invalid_grant" in (exc.body or ""):
-                raise AuthError("Spotify login expired (logins last 6 months). Run: digger auth") from exc
+                raise AuthError("Spotify login expired (logins last 6 months). Run: karasu.cmd auth") from exc
             raise
         self._store(token)
 

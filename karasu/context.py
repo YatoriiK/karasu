@@ -12,11 +12,11 @@ from .sources.spotify import Spotify
 
 
 def _logger():
-    log = logging.getLogger("digger")
+    log = logging.getLogger("karasu")
     if not log.handlers:
         log.setLevel(logging.INFO)
         (DATA / "logs").mkdir(parents=True, exist_ok=True)
-        fh = logging.FileHandler(DATA / "logs" / "digger.log", encoding="utf-8")
+        fh = logging.FileHandler(DATA / "logs" / "karasu.log", encoding="utf-8")
         fh.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
         sh = logging.StreamHandler(sys.stdout)
         sh.setFormatter(logging.Formatter("%(message)s"))

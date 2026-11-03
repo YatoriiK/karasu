@@ -6,8 +6,8 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from digger import config  # noqa: E402
-from digger.db import DB  # noqa: E402
+from karasu import config  # noqa: E402
+from karasu.db import DB  # noqa: E402
 
 
 class FakeCtx:

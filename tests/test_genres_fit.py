@@ -3,8 +3,8 @@ import threading
 
 import numpy as np
 
-from digger.engine import fit as FT
-from digger.engine import genres as G
+from karasu.engine import fit as FT
+from karasu.engine import genres as G
 
 
 class FakeCorpus:

@@ -8,7 +8,7 @@ const out = join(root, "desktop", "src-tauri", "engine");
 // The installer ships the engine's Python source. __pycache__ is just clutter, so it stays behind.
 rmSync(out, { recursive: true, force: true });
 mkdirSync(out, { recursive: true });
-cpSync(join(root, "digger"), join(out, "digger"), {
+cpSync(join(root, "karasu"), join(out, "karasu"), {
   recursive: true,
   filter: (src) => basename(src) !== "__pycache__" && !src.endsWith(".pyc"),
 });

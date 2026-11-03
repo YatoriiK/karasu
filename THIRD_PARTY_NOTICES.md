@@ -21,7 +21,7 @@ motion, TanStack Query, Zustand, React Router, lucide-react, cmdk, sonner, d3, t
 New typefaces (SIL Open Font License 1.1). The full list with versions is in `ui/package.json` and
 `desktop/src-tauri/Cargo.toml`.
 
-`digger/discogs_styles.json` is a list of genre and style names as used on Discogs.
+`karasu/discogs_styles.json` is a list of genre and style names as used on Discogs.
 
 ## Services Karasu talks to
 

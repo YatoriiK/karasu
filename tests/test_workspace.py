@@ -4,8 +4,8 @@ import pytest
 from fastapi import HTTPException
 from PIL import Image
 
-from digger.web.routers import workspace as W
-from digger.web.state import STATE
+from karasu.web.routers import workspace as W
+from karasu.web.state import STATE
 
 
 @pytest.fixture

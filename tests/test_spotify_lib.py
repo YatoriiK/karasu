@@ -1,8 +1,8 @@
 import pytest
 
-from digger.engine import media
-from digger.engine import spotify_lib as L
-from digger.net import NetError
+from karasu.engine import media
+from karasu.engine import spotify_lib as L
+from karasu.net import NetError
 
 
 def track(i, name=None):

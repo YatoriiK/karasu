@@ -1,10 +1,10 @@
 from datetime import timedelta
 
-from digger import pipeline
-from digger.lanes import Cand
-from digger.publish import rolling_update, update_outcomes
-from digger.resolve import original_year
-from digger.util import norm_artist, now
+from karasu import pipeline
+from karasu.lanes import Cand
+from karasu.publish import rolling_update, update_outcomes
+from karasu.resolve import original_year
+from karasu.util import norm_artist, now
 
 
 class FakeDeezer:
@@ -64,7 +64,7 @@ def test_original_year_falls_back_to_search_and_discogs(ctx):
 
 
 def test_original_year_cheap_path_and_budget(ctx):
-    from digger.resolve import Budget
+    from karasu.resolve import Budget
 
     calls = []
 

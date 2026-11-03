@@ -1,8 +1,8 @@
 import { SHOTS } from "./paths.mjs";
 import { chromium } from "playwright";
-const base = process.env.CD_URL || "http://127.0.0.1:8766";
+const base = process.env.KARASU_URL || "http://127.0.0.1:8766";
 const out = SHOTS;
-const ids = (process.env.CD_TRACKS || "dz:1497231712,dz:504902142").split(",");
+const ids = (process.env.KARASU_TRACKS || "dz:1497231712,dz:504902142").split(",");
 const tracks = [];
 for (const id of ids) tracks.push((await (await fetch(`${base}/api/tracks/${id}`)).json()).track);
 

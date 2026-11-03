@@ -43,7 +43,7 @@ pub fn location_file() -> Option<PathBuf> {
 }
 
 pub fn saved_home() -> Option<PathBuf> {
-    for key in ["KARASU_HOME", "CRATEDIGGER_HOME"] {
+    for key in ["KARASU_HOME"] {
         if let Ok(value) = std::env::var(key) {
             if !value.trim().is_empty() {
                 return Some(PathBuf::from(value.trim()));
@@ -72,7 +72,7 @@ pub fn save_home(path: &Path) -> Result<(), String> {
 }
 
 pub fn is_dev(home: &Path) -> bool {
-    home.join("digger").join("__init__.py").exists()
+    home.join("karasu").join("__init__.py").exists()
 }
 
 pub fn python(home: &Path) -> PathBuf {

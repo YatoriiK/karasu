@@ -1,7 +1,7 @@
 @echo off
 setlocal
 call "%~dp0env.cmd"
-pushd "%CD_ROOT%"
+pushd "%KARASU_ROOT%"
 start "" http://127.0.0.1:8765/
-"%CD_PY%" -m digger serve
+"%KARASU_PY%" -m karasu serve
 popd

@@ -1,7 +1,7 @@
 import json
 
-from digger.engine import listeners as LS
-from digger.engine import profile as P
+from karasu.engine import listeners as LS
+from karasu.engine import profile as P
 
 OVERVIEW = {
     "data": {

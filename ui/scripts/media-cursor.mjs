@@ -1,7 +1,7 @@
 import { ROOT, SHOTS } from "./paths.mjs";
 import { readFileSync } from "node:fs";
 import { chromium } from "playwright";
-const base = process.env.CD_URL || "http://127.0.0.1:8766";
+const base = process.env.KARASU_URL || "http://127.0.0.1:8766";
 const out = SHOTS;
 const gif = readFileSync(`${ROOT}/cache/tmp/test-loop.gif`).toString("base64");
 const png = readFileSync(`${ROOT}/cache/tmp/test-arrow.png`).toString("base64");

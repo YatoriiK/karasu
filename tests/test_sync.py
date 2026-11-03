@@ -1,4 +1,4 @@
-from digger.sync import import_history, known_sets, snapshot_recent, sync_all
+from karasu.sync import import_history, known_sets, snapshot_recent, sync_all
 
 
 def track(tid, name, artist, aid, isrc=None):

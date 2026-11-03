@@ -2,9 +2,9 @@ import asyncio
 
 import pytest
 
-from digger.net import NetError
-from digger.web.routers import library as Lib
-from digger.web.state import STATE
+from karasu.net import NetError
+from karasu.web.routers import library as Lib
+from karasu.web.state import STATE
 
 
 @pytest.fixture

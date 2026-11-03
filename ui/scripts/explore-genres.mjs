@@ -1,8 +1,8 @@
 import { SHOTS } from "./paths.mjs";
 import { chromium } from "playwright";
-const base = process.env.CD_URL || "http://127.0.0.1:8766";
+const base = process.env.KARASU_URL || "http://127.0.0.1:8766";
 const out = SHOTS;
-const genre = process.env.CD_GENRE || "slowcore";
+const genre = process.env.KARASU_GENRE || "slowcore";
 const browser = await chromium.launch({ channel: "chrome", headless: true });
 const problems = [];
 

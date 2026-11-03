@@ -1,6 +1,6 @@
 import { ROOT } from "./paths.mjs";
 import { chromium } from "playwright";
-const base = process.env.CD_URL || "http://127.0.0.1:8766";
+const base = process.env.KARASU_URL || "http://127.0.0.1:8766";
 const browser = await chromium.launch({ channel: "chrome", headless: true });
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
 const log = [];

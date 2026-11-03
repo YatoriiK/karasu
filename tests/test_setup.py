@@ -3,11 +3,11 @@ import contextlib
 import pytest
 from fastapi import HTTPException
 
-from digger.engine import setup as S
-from digger.engine.corpus import Corpus
-from digger.sources.spotify import Spotify
-from digger.web.routers import setup as R
-from digger.web.state import STATE
+from karasu.engine import setup as S
+from karasu.engine.corpus import Corpus
+from karasu.sources.spotify import Spotify
+from karasu.web.routers import setup as R
+from karasu.web.state import STATE
 
 CLIENT = "0123456789abcdef0123456789abcdef"
 
@@ -145,7 +145,7 @@ class FakeJob:
 
 
 def test_learning_picks_turns_top_songs_into_taste(state, monkeypatch):
-    from digger.engine import backfill, discover
+    from karasu.engine import backfill, discover
 
     def song(tid, aid):
         return {"id": tid, "title": f"Song {tid}", "preview": f"https://cdn/{tid}.mp3", "duration": 200,

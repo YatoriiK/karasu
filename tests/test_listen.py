@@ -4,8 +4,8 @@ import types
 
 import numpy as np
 
-from digger.engine import listen
-from digger.engine.listen import RATE, Levels
+from karasu.engine import listen
+from karasu.engine.listen import RATE, Levels
 
 
 def tone(freq, seconds=0.05, amp=0.3):
