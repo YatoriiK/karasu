@@ -138,6 +138,7 @@ export const api = {
     get<{ kind: string; total: number; offset: number; items: Track[] }>(
       `/api/library/${kind}?offset=${offset}&limit=${limit}`,
     ),
+  liked: (ids: string[]) => get<Record<string, boolean>>(`/api/liked?ids=${ids.map(encodeURIComponent).join(",")}`),
   feedback: (id: string, kind: "up" | "down" | "clear" | "never_artist") =>
     post<{ ok: boolean; track: Track | null }>("/api/feedback", { id, kind }),
   playlists: () => get<PlaylistSummary[]>("/api/playlists"),
@@ -184,7 +185,8 @@ export const api = {
   connectDevices: () => get<{ devices: SpotifyDevice[] }>("/api/player/spotify/devices"),
   connectPlay: (track_ids: string[], offset: number, device_id?: string | null, position_ms?: number | null, context?: string | null, shuffle?: boolean | null) =>
     post<{ ok: boolean; matched: number | null }>("/api/player/spotify/play", { track_ids, offset, device_id, position_ms, context, shuffle }),
-  connectCommand: (action: string, value?: unknown) => post<{ ok: boolean }>("/api/player/spotify/command", { action, value }),
+  connectCommand: (action: string, value?: unknown, device_id?: string | null) =>
+    post<{ ok: boolean }>("/api/player/spotify/command", { action, value, device_id }),
   saveToSpotify: (id: string) => post<{ ok: boolean; sp_id: string }>("/api/library/save", { id }),
   unsaveFromSpotify: (id: string) => post<{ ok: boolean; sp_id: string }>("/api/library/unsave", { id }),
   syncLibrary: () => post<{ job: string | null }>("/api/library/sync"),

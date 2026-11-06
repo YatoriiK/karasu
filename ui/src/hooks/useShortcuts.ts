@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { useTrackActions } from "../components/music/useTrackActions";
 import { currentTrack, usePlayer } from "../store/player";
 import { useUi } from "../store/ui";
@@ -34,8 +35,9 @@ function typing(target: EventTarget | null) {
 export function useShortcuts() {
   const navigate = useNavigate();
   const actions = useTrackActions();
-  const refs = useRef({ navigate, actions });
-  refs.current = { navigate, actions };
+  const qc = useQueryClient();
+  const refs = useRef({ navigate, actions, qc });
+  refs.current = { navigate, actions, qc };
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.defaultPrevented || typing(e.target)) return;
@@ -84,7 +86,7 @@ export function useShortcuts() {
           p.toggleMute();
           break;
         case "l":
-          if (track) refs.current.actions.like(track);
+          if (track) refs.current.actions.like(track, refs.current.qc.getQueryData<boolean>(["liked", track.id]));
           break;
         case "s":
           p.toggleShuffle();

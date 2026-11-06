@@ -20,6 +20,7 @@ import { cn } from "../components/ui/cn";
 import type { Item } from "./types";
 import { useFrame } from "./frame";
 import { Waveform, type VizStyle } from "../components/viz/Waveform";
+import { usePaint } from "./paint";
 
 export type WidgetProps = { item: Item; editing: boolean };
 
@@ -165,7 +166,7 @@ export function NowPlayingWidget({ item }: WidgetProps) {
               <SkipForward size={18} fill="currentColor" />
             </Skin>
           </button>
-          {track && <LikeButton track={track} size={16} className="h-7 w-7" />}
+          {track && <LikeButton track={track} size={16} className="h-7 w-7" live />}
         </div>
         <Seekbar className="mt-[0.4em] [&_span]:font-mono" />
       </div>
@@ -174,8 +175,10 @@ export function NowPlayingWidget({ item }: WidgetProps) {
 }
 
 export function VisualizerWidget({ item }: WidgetProps) {
+  const paint = usePaint(item);
   return (
     <Waveform
+      paint={paint}
       style={prop<VizStyle>(item, "style", "bars")}
       bars={Number(prop(item, "bars", 24))}
       gap={Number(prop(item, "gap", 0.3))}

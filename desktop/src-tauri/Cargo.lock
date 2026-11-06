@@ -1908,7 +1908,7 @@ dependencies = [
 
 [[package]]
 name = "karasu"
-version = "0.5.13"
+version = "0.5.14"
 dependencies = [
  "serde",
  "serde_json",
@@ -1920,6 +1920,7 @@ dependencies = [
  "tauri-plugin-opener",
  "tauri-plugin-single-instance",
  "tauri-plugin-window-state",
+ "windows",
  "windows-sys 0.59.0",
 ]
 

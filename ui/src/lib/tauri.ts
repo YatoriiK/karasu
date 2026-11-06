@@ -40,6 +40,16 @@ export async function launchSpotify(): Promise<boolean> {
   }
 }
 
+export async function wakeSpotify(): Promise<boolean> {
+  if (!IN_TAURI) return false;
+  try {
+    const { invoke } = await import("@tauri-apps/api/core");
+    return await invoke<boolean>("wake_spotify");
+  } catch {
+    return false;
+  }
+}
+
 export type SpotifyApp = "shown" | "hidden" | "closed";
 
 export async function spotifyApp(): Promise<SpotifyApp | null> {

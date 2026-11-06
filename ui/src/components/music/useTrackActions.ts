@@ -44,6 +44,21 @@ export function patchTrackEverywhere(qc: QueryClient, track: Track) {
   usePlayer.getState().patchTrack(track);
 }
 
+type Pages = { pages: { total: number; items: Track[] }[]; pageParams: unknown[] };
+
+// Show a like in the Library right away instead of after the round trip to Spotify.
+function touchLibrary(qc: QueryClient, kind: string, track: Track, on: boolean) {
+  const same = (t: Track) => t.id === track.id || (!!track.sp_id && t.sp_id === track.sp_id);
+  qc.setQueryData<Pages>(["library", kind], (data) => {
+    if (!data?.pages?.length) return data;
+    const before = data.pages.reduce((n, p) => n + p.items.length, 0);
+    const pages = data.pages.map((p) => ({ ...p, items: p.items.filter((t) => !same(t)) }));
+    if (on) pages[0] = { ...pages[0], items: [track, ...pages[0].items] };
+    const delta = pages.reduce((n, p) => n + p.items.length, 0) - before;
+    return { ...data, pages: pages.map((p) => ({ ...p, total: Math.max(0, p.total + delta) })) };
+  });
+}
+
 export function useTrackActions() {
   const qc = useQueryClient();
   const navigate = useNavigate();
@@ -94,11 +109,14 @@ export function useTrackActions() {
     },
     playNext: (track: Track) => usePlayer.getState().playNext(track),
     enqueue: (track: Track) => usePlayer.getState().enqueue([track]),
-    like: async (track: Track) => {
-      const on = !(track.state.liked || track.state.saved);
+    like: async (track: Track, shown?: boolean) => {
+      const on = !(shown ?? (track.state.liked || track.state.saved));
       const spotify = useConnect.getState().ready;
       const optimistic: Track = { ...track, state: { ...track.state, liked: on, disliked: false, saved: on ? track.state.saved || spotify : false } };
       patchTrackEverywhere(qc, optimistic);
+      qc.setQueryData(["liked", track.id], on);
+      touchLibrary(qc, "liked", optimistic, on && !!track.dz_id);
+      if (spotify) touchLibrary(qc, "saved", optimistic, on);
       try {
         await api.feedback(track.id, on ? "up" : "clear");
         if (spotify) {
@@ -111,8 +129,12 @@ export function useTrackActions() {
           }
         }
         qc.invalidateQueries({ queryKey: ["library", "saved"] });
+        qc.invalidateQueries({ queryKey: ["library", "liked"] });
+        qc.invalidateQueries({ queryKey: ["liked"] });
       } catch (error) {
         patchTrackEverywhere(qc, track);
+        qc.invalidateQueries({ queryKey: ["liked"] });
+        qc.invalidateQueries({ queryKey: ["library"] });
         toast("Couldn't save that", { description: (error as Error).message });
       }
     },

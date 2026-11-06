@@ -14,4 +14,4 @@ for _key, _value in {
 }.items():
     os.environ.setdefault(_key, str(_value))
 
-__version__ = "0.5.13"
+__version__ = "0.5.14"

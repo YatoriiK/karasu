@@ -284,7 +284,7 @@ export type ConnectState = {
   shuffle?: boolean;
   repeat?: string;
   device?: { id: string; name: string; type: string; volume: number | null };
-  track?: { sp_id: string; uri: string; title: string; artist: string; album: string; duration_ms: number; image: string | null } | null;
+  track?: { sp_id: string; linked_id?: string | null; uri: string; title: string; artist: string; album: string; duration_ms: number; image: string | null } | null;
 };
 
 export type GenreCard = {

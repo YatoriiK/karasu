@@ -3,10 +3,11 @@ import { persist } from "zustand/middleware";
 import { toast } from "sonner";
 import { api, ApiError } from "../lib/api";
 import { spotifyArt } from "../lib/art";
+import { wakeSpotify } from "../lib/tauri";
 import { engine } from "../player/engine";
 import { nextPlayableIndex, shuffled } from "../player/queue";
 import type { Art, Track } from "../lib/types";
-import { ensureDevice, onConnectState, pollConnect, startConnectPolling, stopConnectPolling, useConnect } from "./connect";
+import { connectTime, onConnectState, pollConnect, startConnectPolling, stopConnectPolling, useConnect, wakeConnect } from "./connect";
 import { usePrefs } from "./prefs";
 
 export type Repeat = "off" | "all" | "one";
@@ -58,37 +59,39 @@ export function connectError(error: unknown) {
       action: { label: "Reconnect", onClick: () => api.spotifyLogin() },
     });
   } else if (error instanceof ApiError && error.status === 409) {
-    toast("No active Spotify device", { description: "Open Spotify on this PC or your phone, then pick it under Devices." });
+    toast("Spotify isn't responding", { description: message });
   } else {
     toast("Spotify couldn't play that", { description: message });
   }
 }
 
 let volumeTimer: number | null = null;
+let pausedAt: { index: number; ms: number } | null = null;
 
 export const usePlayer = create<PlayerState>()(
   persist(
     (set, get) => {
-      const spotifyPlay = async (queue: Track[], index: number) => {
+      const spotifyPlay = async (queue: Track[], index: number, positionMs: number | null = null) => {
         const context = get().context?.spotify ?? null;
         const lo = context ? 0 : Math.max(0, index - 20);
         const ids = (context ? queue : queue.slice(lo, lo + 100)).map((t) => t.id);
         const offset = index - lo;
         const shuffle = get().shuffle;
+        pausedAt = null;
         set({ playing: true });
         startConnectPolling();
         try {
-          await api.connectPlay(ids, offset, get().deviceId, null, context, shuffle);
+          await api.connectPlay(ids, offset, get().deviceId, positionMs, context, shuffle);
           window.setTimeout(() => void pollConnect(), 700);
         } catch (error) {
           if (error instanceof ApiError && error.status === 409) {
-            const waiting = toast.loading("Starting Spotify in the background…");
-            const device = await ensureDevice();
+            const waiting = toast.loading("Waking up Spotify…");
+            const device = await wakeConnect();
             toast.dismiss(waiting);
             if (device) {
               set({ deviceId: device.id, deviceName: device.name });
               try {
-                await api.connectPlay(ids, offset, device.id, null, context, shuffle);
+                await api.connectPlay(ids, offset, device.id, positionMs, context, shuffle);
                 window.setTimeout(() => void pollConnect(), 700);
                 return;
               } catch (retry) {
@@ -103,9 +106,44 @@ export const usePlayer = create<PlayerState>()(
 
       const command = (action: string, value?: unknown) =>
         api
-          .connectCommand(action, value)
+          .connectCommand(action, value, get().deviceId)
           .then(() => window.setTimeout(() => void pollConnect(), 500))
           .catch(connectError);
+
+      const lost = (error: unknown) => error instanceof ApiError && (error.status === 409 || error.status === 410);
+
+      // After a long pause Spotify may have dropped the song, so start it again from where it stopped.
+      const resume = async () => {
+        try {
+          await api.connectCommand("resume", null, get().deviceId);
+          window.setTimeout(() => void pollConnect(), 500);
+          return;
+        } catch (error) {
+          if (error instanceof ApiError && error.status === 409 && (await wakeSpotify())) {
+            window.setTimeout(() => void pollConnect(), 800);
+            return;
+          }
+          const { queue, index } = get();
+          if (lost(error) && queue[index]) return spotifyPlay(queue, index, pausedAt?.index === index ? pausedAt.ms : null);
+          set({ playing: false });
+          connectError(error);
+        }
+      };
+
+      const skip = (action: "next" | "previous", target: number) =>
+        api
+          .connectCommand(action, null, get().deviceId)
+          .then(() => window.setTimeout(() => void pollConnect(), 500))
+          .catch((error) => {
+            const { queue } = get();
+            if (lost(error) && queue[target]) return spotifyPlay(queue, target);
+            connectError(error);
+          });
+
+      const pause = () => {
+        pausedAt = { index: get().index, ms: Math.round(connectTime() * 1000) };
+        return command("pause");
+      };
 
       const ok = () => (get().source === "spotify" ? playableSpotify : playablePreview);
 
@@ -167,13 +205,13 @@ export const usePlayer = create<PlayerState>()(
           const { playing, queue, index, source } = get();
           if (source === "spotify" && (index < 0 || !queue[index]) && useConnect.getState().state?.track) {
             set({ playing: !playing });
-            void command(playing ? "pause" : "resume");
+            void (playing ? pause() : resume());
             return;
           }
           if (index < 0 || !queue[index]) return;
           if (source === "spotify") {
             set({ playing: !playing });
-            void command(playing ? "pause" : "resume");
+            void (playing ? pause() : resume());
             return;
           }
           if (playing) {
@@ -192,7 +230,7 @@ export const usePlayer = create<PlayerState>()(
           if (source === "spotify") {
             const target = nextPlayableIndex(queue, order, index, 1, repeat === "all", playableSpotify);
             if (target >= 0) set({ index: target });
-            void command("next");
+            void skip("next", target);
             return;
           }
           if (auto && repeat === "one") {
@@ -216,7 +254,7 @@ export const usePlayer = create<PlayerState>()(
           if (source === "spotify") {
             const target = nextPlayableIndex(queue, order, index, -1, false, playableSpotify);
             if (target >= 0) set({ index: target });
-            void command("previous");
+            void skip("previous", target);
             return;
           }
           if (engine.currentTime > 3 || index < 0) {

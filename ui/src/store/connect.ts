@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { api, ApiError } from "../lib/api";
-import { launchSpotify, openExternal } from "../lib/tauri";
+import { launchSpotify, openExternal, wakeSpotify } from "../lib/tauri";
 import type { ConnectState, SpotifyDevice } from "../lib/types";
 
 type ConnectStore = {
@@ -106,4 +106,11 @@ export function ensureDevice(): Promise<SpotifyDevice | null> {
     window.setTimeout(() => (starting = null), 500);
   });
   return starting;
+}
+
+// Spotify that sat idle only listens again after play is pressed inside it, so press it through Windows.
+export async function wakeConnect(): Promise<SpotifyDevice | null> {
+  const device = await ensureDevice();
+  if (device && (await wakeSpotify())) await new Promise((r) => window.setTimeout(r, 1200));
+  return device;
 }

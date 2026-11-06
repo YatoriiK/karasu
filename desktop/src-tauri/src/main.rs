@@ -411,6 +411,34 @@ fn hide_spotify() -> bool {
     true
 }
 
+// An idle Spotify ignores the Web API until something presses play inside the app. Windows' media
+// controls can do that press for us, same as the play button in the volume flyout.
+fn press_play_in_spotify() -> windows::core::Result<bool> {
+    use windows::Media::Control::{
+        GlobalSystemMediaTransportControlsSessionManager as Sessions,
+        GlobalSystemMediaTransportControlsSessionPlaybackStatus as Status,
+    };
+    let sessions = Sessions::RequestAsync()?.join()?.GetSessions()?;
+    for i in 0..sessions.Size()? {
+        let session = sessions.GetAt(i)?;
+        if !session.SourceAppUserModelId()?.to_string().to_lowercase().contains("spotify") {
+            continue;
+        }
+        if session.GetPlaybackInfo()?.PlaybackStatus()? == Status::Playing {
+            return Ok(true);
+        }
+        return session.TryPlayAsync()?.join();
+    }
+    Ok(false)
+}
+
+#[tauri::command]
+async fn wake_spotify() -> bool {
+    tauri::async_runtime::spawn_blocking(|| press_play_in_spotify().unwrap_or(false))
+        .await
+        .unwrap_or(false)
+}
+
 #[derive(serde::Deserialize)]
 struct Binding {
     action: String,
@@ -476,6 +504,7 @@ fn main() {
             launch_spotify,
             show_spotify,
             hide_spotify,
+            wake_spotify,
             spotify_window,
             set_global_shortcuts,
             engine_info,

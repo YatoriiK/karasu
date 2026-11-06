@@ -44,6 +44,38 @@ def library(kind: str, offset: int = 0, limit: int = 60):
     return {"kind": kind, "total": total, "offset": offset, "items": catalog.tracks(ids)}
 
 
+def song_ids(db, tid):
+    # One song can have several Spotify ids (remasters, relinked copies), so collect all of them.
+    kind, value = parse_id(tid)
+    if kind == "sp":
+        sps = {value}
+        dzs = {r[0] for r in db.q("select dz_id from sp_dz where sp_id=? and dz_id>0", (value,))}
+    else:
+        sps = set()
+        dzs = {value}
+    for dz in dzs:
+        sps |= {r[0] for r in db.q("select sp_id from dz_sp where dz_id=? and sp_id is not null", (dz,))}
+        sps |= {r[0] for r in db.q("select sp_id from sp_dz where dz_id=?", (dz,))}
+    return sps, dzs
+
+
+def is_liked(db, tid):
+    sps, dzs = song_ids(db, tid)
+    if any(db.one("select 1 from saved where track_id=?", (s,)) for s in sps):
+        return True
+    for dz in dzs:
+        row = db.one("select kind from feedback where dz_id=? order by id desc limit 1", (dz,))
+        if row and row[0] == "up":
+            return True
+    return False
+
+
+@router.get("/liked")
+def liked(ids: str = ""):
+    db = ctx().db
+    return {tid: is_liked(db, tid) for tid in [i for i in ids.split(",") if i][:20]}
+
+
 class Feedback(BaseModel):
     id: str
     kind: str

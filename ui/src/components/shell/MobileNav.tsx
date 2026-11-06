@@ -57,7 +57,7 @@ export function MiniPlayer() {
             <div className="truncate text-xs text-fg-2">{track.artist.name}</div>
           </div>
         </button>
-        <LikeButton track={track} size={18} className="shrink-0" />
+        <LikeButton track={track} size={18} className="shrink-0" live />
         <PlayButton size={36} />
         <IconButton label="Next" size="sm" round onClick={() => next()}>
           <SkipForward size={17} fill="currentColor" />

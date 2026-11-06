@@ -21,9 +21,9 @@ import { Record, type RecordKind } from "../components/visual/Record";
 import { rgba, toRgb, type RGB } from "../components/visual/color";
 import { Pulse } from "../components/visual/pulse";
 import { makeScene, sceneBlur, type Painter } from "../components/visual/scenes";
-import { useSceneColor } from "../components/shell/SceneLayer";
 import { cn } from "../components/ui/cn";
 import { Empty, prop, type WidgetProps } from "./widgets";
+import { glowOn, paintFill, shade, usePaint } from "./paint";
 
 type Frame = { ctx: CanvasRenderingContext2D; w: number; h: number; dt: number; t: number; bands: Float32Array; rms: number; ink: RGB; dark: boolean };
 
@@ -187,8 +187,10 @@ export function RingWidget({ item }: WidgetProps) {
   const track = usePlayer(currentTrack);
   const playing = usePlayer((s) => s.playing);
   const level = useRef(new Float32Array(256));
-  const ref = useCanvas(({ ctx, w, h, dt, t, bands, rms, ink }) => {
+  const paint = usePaint(item);
+  const ref = useCanvas(({ ctx, w, h, dt, t, bands, rms }) => {
     ctx.clearRect(0, 0, w, h);
+    ctx.shadowBlur = 0;
     const cx = w / 2;
     const cy = h / 2;
     const size = Math.min(w, h);
@@ -200,24 +202,26 @@ export function RingWidget({ item }: WidgetProps) {
     const rot = spin ? t * 0.15 : 0;
     const e = Math.min(1, rms);
     const halo = ctx.createRadialGradient(cx, cy, inner * 0.92, cx, cy, inner + span * (0.5 + 0.5 * e));
-    halo.addColorStop(0, rgba(ink, 0.06 + 0.2 * e));
-    halo.addColorStop(1, rgba(ink, 0));
+    halo.addColorStop(0, rgba(paint.a, 0.06 + 0.2 * e));
+    halo.addColorStop(1, rgba(paint.b, 0));
     ctx.fillStyle = halo;
     ctx.fillRect(0, 0, w, h);
     ctx.lineCap = "round";
     ctx.lineWidth = Math.max(1, ((Math.PI * 2 * inner) / n) * 0.42);
+    glowOn(ctx, paint);
     for (let i = 0; i < n; i++) {
       const k = i < half ? i : n - 1 - i;
       const v = Math.min(1, band(bands, 0.03 + (k / half) * 0.82) * sensitivity);
       lv[i] = v > lv[i] ? lv[i] + (v - lv[i]) * 0.6 : lv[i] + (v - lv[i]) * Math.min(1, dt * 5);
       const a = rot + (i / n) * Math.PI * 2 - Math.PI / 2;
       const len = 1.5 + lv[i] * span;
-      ctx.strokeStyle = rgba(ink, 0.3 + 0.7 * lv[i]);
+      ctx.strokeStyle = rgba(shade(paint, paint.dir === "along" ? i / (n - 1) : lv[i]), 0.3 + 0.7 * lv[i]);
       ctx.beginPath();
       ctx.moveTo(cx + Math.cos(a) * inner, cy + Math.sin(a) * inner);
       ctx.lineTo(cx + Math.cos(a) * (inner + len), cy + Math.sin(a) * (inner + len));
       ctx.stroke();
     }
+    ctx.shadowBlur = 0;
   }, true);
   return (
     <div className="relative h-full w-full [container-type:size]">
@@ -258,8 +262,12 @@ export function MetersWidget({ item }: WidgetProps) {
   const style = prop<string>(item, "style", "analog");
   const sensitivity = Number(prop(item, "sensitivity", 1));
   const state = useRef({ pos: [0, 0], vel: [0, 0], peak: [0, 0], hold: [0, 0], mean: [0, 0], dev: [0, 0] });
-  const ref = useCanvas(({ ctx, w, h, dt, bands, rms, ink }) => {
+  const paint = usePaint(item);
+  const ref = useCanvas(({ ctx, w, h, dt, bands, rms }) => {
     ctx.clearRect(0, 0, w, h);
+    ctx.shadowBlur = 0;
+    const ink = paint.a;
+    const hot = paint.gradient ? paint.b : paint.a;
     const s = state.current;
     const meters = count === 1 ? 1 : 2;
     const lows = average(bands, 0, 22);
@@ -307,8 +315,10 @@ export function MetersWidget({ item }: WidgetProps) {
         for (let i = 0; i < n; i++) {
           const lit = (i + 1) / n <= Math.min(1, s.pos[m]);
           const peak = Math.abs((i + 1) / n - Math.min(1, s.peak[m])) < 0.5 / n;
-          ctx.fillStyle = rgba(ink, lit ? (i > n * 0.8 ? 1 : 0.75) : peak ? 0.9 : 0.08);
+          ctx.fillStyle = rgba(shade(paint, i / (n - 1)), lit ? (i > n * 0.8 ? 1 : 0.75) : peak ? 0.9 : 0.08);
+          if (lit) glowOn(ctx, paint);
           ctx.fillRect(x0 + pad + i * segW + 1, top, segW - 2, segH);
+          ctx.shadowBlur = 0;
         }
         continue;
       }
@@ -331,7 +341,7 @@ export function MetersWidget({ item }: WidgetProps) {
       ctx.arc(cx, cy, R * 0.82, angle(0), angle(0.78));
       ctx.stroke();
       ctx.lineWidth = 3;
-      ctx.strokeStyle = rgba(ink, 0.85);
+      ctx.strokeStyle = rgba(hot, 0.85);
       ctx.beginPath();
       ctx.arc(cx, cy, R * 0.82, angle(0.78), angle(1));
       ctx.stroke();
@@ -340,7 +350,7 @@ export function MetersWidget({ item }: WidgetProps) {
       ctx.textBaseline = "middle";
       for (const [db, f] of VU) {
         const a = angle(f);
-        ctx.strokeStyle = rgba(ink, f >= 0.78 ? 0.9 : 0.55);
+        ctx.strokeStyle = f >= 0.78 ? rgba(hot, 0.9) : rgba(ink, 0.55);
         ctx.lineWidth = f >= 0.78 ? 2 : 1;
         ctx.beginPath();
         ctx.moveTo(cx + Math.cos(a) * R * 0.82, cy + Math.sin(a) * R * 0.82);
@@ -356,10 +366,12 @@ export function MetersWidget({ item }: WidgetProps) {
       const a = angle(Math.min(1.06, s.pos[m]));
       ctx.strokeStyle = rgba(ink, 0.95);
       ctx.lineWidth = 1.6;
+      glowOn(ctx, paint);
       ctx.beginPath();
       ctx.moveTo(cx + Math.cos(a) * R * 0.12, cy + Math.sin(a) * R * 0.12);
       ctx.lineTo(cx + Math.cos(a) * R * 0.95, cy + Math.sin(a) * R * 0.95);
       ctx.stroke();
+      ctx.shadowBlur = 0;
       ctx.fillStyle = rgba(ink, 0.9);
       ctx.beginPath();
       ctx.arc(cx, cy, Math.max(2, R * 0.045), 0, Math.PI * 2);
@@ -376,33 +388,53 @@ export function LyricsWidget({ item }: WidgetProps) {
   const align = prop<string>(item, "align", "center");
   const { data } = useQuery({ ...lyricsQuery(track?.id ?? "none"), enabled: !!track });
   const [now, setNow] = useState(0);
+  const reel = useRef<HTMLDivElement>(null);
+  const [shift, setShift] = useState(0);
   useEffect(() => {
     const t = window.setInterval(() => setNow(playbackNow()), 250);
     return () => window.clearInterval(t);
   }, []);
+  const synced = data?.synced ?? [];
+  let index = 0;
+  for (let i = 0; i < synced.length; i++) if (synced[i].t <= now + 0.2) index = i;
+  // Long lines wrap, so lines aren't all the same height: center the current one by measuring it.
+  useLayoutEffect(() => {
+    const el = reel.current;
+    if (!el) return;
+    const place = () => {
+      const line = el.children[index] as HTMLElement | undefined;
+      if (line) setShift(-(line.offsetTop + line.offsetHeight / 2));
+    };
+    place();
+    const ro = new ResizeObserver(place);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [index, synced]);
   if (!track) return <Empty>Play something to see its lyrics</Empty>;
   if (!data) return <Empty>Looking for lyrics…</Empty>;
   if (data.instrumental) return <Empty>Instrumental</Empty>;
-  if (!data.synced?.length) {
+  if (!synced.length) {
     if (!data.plain) return <Empty>{data.status === "busy" ? "The lyrics service is busy" : "No lyrics found"}</Empty>;
     return <div className="scroll-area h-full whitespace-pre-line text-[0.95em] leading-relaxed text-fg-1">{data.plain}</div>;
   }
-  const synced = data.synced;
-  let index = 0;
-  for (let i = 0; i < synced.length; i++) if (synced[i].t <= now + 0.2) index = i;
   const half = Math.floor(lines / 2);
   return (
     <div className={cn("relative h-full overflow-hidden [container-type:size]", align === "left" ? "text-left" : "text-center")}>
       <div
+        ref={reel}
         className="absolute inset-x-0 top-1/2 transition-transform duration-500 ease-[cubic-bezier(.16,1,.3,1)]"
-        style={{ transform: `translateY(calc(${-index - 0.5} * 1.7em))`, fontSize: `min(${100 / (lines * 1.7)}cqh, 7cqw)` }}
+        style={{ transform: `translateY(${shift}px)`, fontSize: `min(${100 / (lines * 1.7)}cqh, 7cqw)` }}
       >
         {synced.map((line, i) => {
           const d = Math.abs(i - index);
           return (
             <div
               key={i}
-              className={cn("truncate font-display leading-[1.7em] transition-[opacity,color] duration-500", i === index ? "ink-glow text-fg-0" : "text-fg-2")}
+              data-lyric-line={i === index ? "now" : undefined}
+              className={cn(
+                "py-[0.22em] font-display leading-[1.25] [overflow-wrap:anywhere] transition-[opacity,color] duration-500",
+                i === index ? "ink-glow text-fg-0" : "text-fg-2",
+              )}
               style={{ opacity: d > half ? 0 : i === index ? 1 : 0.55 - d * 0.1 }}
             >
               {line.text || "♪"}
@@ -421,7 +453,8 @@ export function InkFlowWidget({ item }: WidgetProps) {
   const trail = Number(prop(item, "trail", 0.06));
   const react = prop(item, "react", true);
   const parts = useRef<Float32Array | null>(null);
-  const ref = useCanvas(({ ctx, w, h, dt, t, bands, rms, ink }) => {
+  const paint = usePaint(item);
+  const ref = useCanvas(({ ctx, w, h, dt, t, bands, rms }) => {
     let p = parts.current;
     if (!p || p.length !== count * 2) {
       p = new Float32Array(count * 2);
@@ -431,6 +464,7 @@ export function InkFlowWidget({ item }: WidgetProps) {
       }
       parts.current = p;
     }
+    ctx.shadowBlur = 0;
     ctx.globalCompositeOperation = "destination-out";
     ctx.fillStyle = `rgba(0,0,0,${trail})`;
     ctx.fillRect(0, 0, w, h);
@@ -439,7 +473,9 @@ export function InkFlowWidget({ item }: WidgetProps) {
     const bass = react ? average(bands, 0, 8) : 0;
     const v = 38 * speed * (1 + energy * 2.2);
     const scale = 3.2 / Math.max(w, h);
-    ctx.strokeStyle = rgba(ink, 0.16 + energy * 0.4);
+    ctx.strokeStyle = paintFill(ctx, paint, w, h, "bottom");
+    ctx.globalAlpha = 0.16 + energy * 0.4;
+    glowOn(ctx, paint);
     ctx.lineWidth = 1;
     ctx.beginPath();
     for (let i = 0; i < count; i++) {
@@ -459,6 +495,7 @@ export function InkFlowWidget({ item }: WidgetProps) {
       }
     }
     ctx.stroke();
+    ctx.globalAlpha = 1;
   }, true);
   return <canvas ref={ref} className="h-full w-full" />;
 }
@@ -467,7 +504,7 @@ export function SceneWidget({ item }: WidgetProps) {
   useSystemAudio();
   const kind = prop<string>(item, "scene", "ripples");
   const sense = Number(prop(item, "sensitivity", 1));
-  const color = useSceneColor(prop<string>(item, "color", "ink"));
+  const color = usePaint(item, "ink").a;
   const scene = useRef<{ kind: string; paint: Painter; pulse: Pulse } | null>(null);
   const ref = useCanvas(({ ctx, w, h, dt, t, bands, rms, dark }) => {
     if (scene.current?.kind !== kind) scene.current = { kind, paint: makeScene(kind), pulse: new Pulse() };
@@ -481,21 +518,13 @@ export function SceneWidget({ item }: WidgetProps) {
 
 export function OrbWidget({ item }: WidgetProps) {
   useSystemAudio();
-  const source = prop<string>(item, "color", "art");
   const pulse = Number(prop(item, "pulse", 1));
-  const track = usePlayer(currentTrack);
-  const ink = useLook((s) => s.look.ink);
-  const accent = track?.art?.palette?.accent;
-  const color = useRef<RGB>([236, 235, 230]);
-  useEffect(() => {
-    const css = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
-    color.current = toRgb(source === "art" && accent ? accent : source === "accent" && css ? css : ink);
-  }, [source, accent, ink]);
+  const paint = usePaint(item, "art");
   const energy = useRef(0);
   const ref = useCanvas(({ ctx, w, h, dt, t, rms, dark }) => {
     energy.current += (Math.min(1, rms * 1.3 * pulse) - energy.current) * Math.min(1, dt * 8);
     const e = energy.current;
-    const c = color.current;
+    const c = paint.a;
     ctx.clearRect(0, 0, w, h);
     const cx = w / 2;
     const cy = h / 2;

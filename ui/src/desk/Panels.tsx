@@ -5,6 +5,7 @@ import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } 
 import { CSS } from "@dnd-kit/utilities";
 import {
   ArrowDownToLine,
+  ArrowLeftRight,
   ArrowUpToLine,
   ChevronDown,
   ChevronUp,
@@ -15,6 +16,7 @@ import {
   GripVertical,
   Lock,
   RotateCcw,
+  SquareDashed,
   Trash2,
   Unlock,
   Upload,
@@ -109,8 +111,18 @@ function patchItem(id: string, patch: (i: Item) => Item) {
 
 function FieldControl({ item, field }: { item: Item; field: Field }) {
   const set = useSetter();
-  const value = item.props[field.key];
+  const look = useLook((s) => s.look);
+  const value = item.props[field.key] ?? (field.key === "paint" ? item.props.color : undefined);
   const put = (v: unknown) => set(`${item.id}.p.${field.key}`, patchItem(item.id, (i) => ({ ...i, props: { ...i.props, [field.key]: v } })));
+  if (field.type === "color") {
+    const shown = typeof value === "string" ? value : field.key === "paintB" ? look.accent : (item.style.color ?? look.ink);
+    return (
+      <Row label={field.label}>
+        <input type="color" value={shown.startsWith("#") ? shown : "#ffffff"} onChange={(e) => put(e.target.value)} className="h-7 w-12 cursor-pointer rounded-sm bg-transparent" />
+        <span className="font-mono text-[11px] text-fg-3">{shown}</span>
+      </Row>
+    );
+  }
   if (field.type === "asset")
     return (
       <div>
@@ -203,9 +215,18 @@ function ElementPanel({ item }: { item: Item }) {
       <Section
         title="Look"
         action={
-          <button onClick={() => d.updateItem(item.id, { style: {} })} className="flex items-center gap-1 text-[10.5px] text-fg-3 hover:text-fg-0">
-            <RotateCcw size={11} /> reset
-          </button>
+          <span className="flex items-center gap-3">
+            <button
+              onClick={() => d.updateItem(item.id, { style: { ...s, titlebar: "none", bg: "none", border: 0, shadow: "none", radius: 0, padding: 0 } })}
+              title="No title, background, border, shadow or padding"
+              className="flex items-center gap-1 text-[10.5px] text-fg-3 hover:text-fg-0"
+            >
+              <SquareDashed size={11} /> frameless
+            </button>
+            <button onClick={() => d.updateItem(item.id, { style: {} })} className="flex items-center gap-1 text-[10.5px] text-fg-3 hover:text-fg-0">
+              <RotateCcw size={11} /> reset
+            </button>
+          </span>
         }
       >
         <Row label="Frame">
@@ -640,7 +661,7 @@ function DeskPanel() {
         </div>
         <button
           onClick={() => {
-            const vw = d.viewport.w - (d.viewport.w > 900 ? 330 : 0) - 24;
+            const vw = d.viewport.w - 24;
             const vh = d.viewport.h - 24;
             if (vw < 300 || vh < 200) return;
             d.update((x) => ({ ...x, canvas: { w: vw, h: vh }, items: fitToCanvas(x.items, x.canvas, { w: vw, h: vh }) }));
@@ -661,7 +682,7 @@ function DeskPanel() {
   );
 }
 
-export function Panels() {
+export function Panels({ side, onFlip }: { side: "left" | "right"; onFlip: () => void }) {
   const panel = useDesk((s) => s.panel);
   const selected = useDesk((s) => s.selected);
   const layout = useActiveLayout();
@@ -674,14 +695,26 @@ export function Panels() {
   ] as const;
   return (
     <motion.aside
-      initial={{ x: 24, opacity: 0 }}
+      key={side}
+      initial={{ x: side === "left" ? -24 : 24, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
-      exit={{ x: 24, opacity: 0 }}
+      exit={{ x: side === "left" ? -24 : 24, opacity: 0 }}
       transition={{ type: "spring", stiffness: 380, damping: 36 }}
-      className="glass absolute bottom-3 right-3 top-3 z-[60] flex w-[316px] flex-col overflow-hidden rounded-lg font-mono text-[12.5px]"
+      className={cn(
+        "glass absolute bottom-3 top-3 z-[60] flex w-[316px] flex-col overflow-hidden rounded-lg font-mono text-[12.5px]",
+        side === "left" ? "left-3" : "right-3",
+      )}
+      style={{ background: "color-mix(in srgb, var(--surface) 94%, transparent)", backdropFilter: "blur(24px)" }}
       onPointerDown={(e) => e.stopPropagation()}
     >
       <div className="flex shrink-0 border-b border-line">
+        <button
+          onClick={onFlip}
+          title={side === "left" ? "Move panel to the right" : "Move panel to the left"}
+          className="grid w-8 shrink-0 place-items-center text-fg-3 transition-colors hover:text-fg-0"
+        >
+          <ArrowLeftRight size={13} />
+        </button>
         {tabs.map((t) => (
           <button
             key={t.id}

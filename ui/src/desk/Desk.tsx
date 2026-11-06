@@ -25,12 +25,14 @@ function frameCss(s: ItemStyle, look: Look): CSSProperties {
   const alpha = s.surface != null ? `${Math.round(s.surface * 100)}%` : "var(--surface-alpha)";
   const bg = s.bg ?? "inherit";
   const blur = s.blur ?? look.blur;
+  // The look's shadow draws a faint ring, so a widget with no background drops it unless one is picked.
+  const shadow = !s.shadow || s.shadow === "inherit" ? (bg === "none" ? "none" : "var(--shadow-win)") : SHADOWS[s.shadow];
   const css: CSSProperties = {
     borderRadius: `${s.radius ?? look.radius}px`,
     borderWidth: `${s.border ?? look.border}px`,
     borderStyle: s.borderStyle ?? "solid",
     borderColor: s.borderColor ?? "var(--border-c)",
-    boxShadow: !s.shadow || s.shadow === "inherit" ? "var(--shadow-win)" : SHADOWS[s.shadow],
+    boxShadow: shadow,
   };
   if (bg === "none") css.background = "transparent";
   else if (bg === "image" && s.bgImage) {
@@ -199,7 +201,7 @@ const EditOverlay = memo(function EditOverlay({
           moved = true;
         }
         const next = moveRect(rect, dx, dy, data.grid, snapOn && !ev.altKey);
-        if (!ev.altKey && item.r === 0) {
+        if (snapOn && !ev.altKey && item.r === 0) {
           const g = guides(next, others, data.canvas, 6 / scale);
           next.x += g.dx;
           next.y += g.dy;
@@ -353,9 +355,9 @@ function Toolbar() {
         <Redo2 size={14} />
       </button>
       <button
-        className={cn(btn, snapOn && "text-fg-0")}
+        className={cn(btn, snapOn && "bg-fg-0/10 text-fg-0")}
         aria-pressed={snapOn}
-        title="Snap to grid and other elements (hold Alt to move freely)"
+        title={snapOn ? "Snapping to the grid and other widgets. Click to place things anywhere (or hold Alt)" : "Placing freely. Click to snap to the grid and other widgets"}
         onClick={() => d.update((data) => ({ ...data, snap: !snapOn }))}
       >
         <Magnet size={14} /> {snapOn ? "snap" : "free"}
@@ -425,6 +427,13 @@ export async function addImages(files: File[], at?: { x: number; y: number }) {
   }
 }
 
+const PANEL = 336;
+
+function fitCanvas(box: { w: number; h: number }, canvas: { w: number; h: number }) {
+  const scale = box.w > 0 && box.w < 720 ? 1 : Math.min(1.6, Math.max(0.45, Math.min(box.w / canvas.w, box.h / canvas.h)));
+  return { scale, left: Math.max(0, (box.w - canvas.w * scale) / 2), top: Math.max(0, (box.h - canvas.h * scale) / 2) };
+}
+
 export function Desk() {
   const ready = useDesk((s) => s.ready);
   const editing = useDesk((s) => s.editing);
@@ -435,7 +444,21 @@ export function Desk() {
   const [box, setBox] = useState({ w: 0, h: 0 });
   const [guide, setGuide] = useState<Guides>(null);
   const [dropping, setDropping] = useState(false);
+  const [side, setSide] = useState<"left" | "right">("right");
   useDeskKeys(editing);
+
+  const picked = layout?.data.items.find((i) => i.id === selected);
+  useEffect(() => {
+    if (!picked || !layout) return;
+    const { scale, left } = fitCanvas(box, layout.data.canvas);
+    const x0 = left + picked.x * scale;
+    const x1 = x0 + picked.w * scale;
+    const covered = (s: "left" | "right") => (s === "right" ? x1 > box.w - PANEL : x0 < PANEL);
+    setSide((s) => {
+      const other = s === "right" ? "left" : "right";
+      return covered(s) && !covered(other) ? other : s;
+    });
+  }, [selected]);
 
   useEffect(() => {
     if (!ready) void useDesk.getState().load().catch(() => undefined);
@@ -465,12 +488,10 @@ export function Desk() {
   }
 
   const data = layout.data;
-  const panelW = editing && box.w > 900 ? 330 : 0;
-  const availW = Math.max(200, box.w - panelW);
+  // Same size and spot in edit mode as outside it, so things lined up with the wallpaper stay lined up.
+  // The panel floats over the desk instead of squeezing it.
+  const { scale, left, top } = fitCanvas(box, data.canvas);
   const narrow = box.w > 0 && box.w < 720;
-  const scale = narrow ? 1 : Math.min(1.6, Math.max(0.45, Math.min(availW / data.canvas.w, box.h / data.canvas.h)));
-  const left = Math.max(0, (availW - data.canvas.w * scale) / 2);
-  const top = Math.max(0, (box.h - data.canvas.h * scale) / 2);
   const items = sortedByZ(data.items);
 
   const toCanvas = (clientX: number, clientY: number) => {
@@ -551,7 +572,7 @@ export function Desk() {
       )}
 
       <AnimatePresence>{editing && <Toolbar />}</AnimatePresence>
-      <AnimatePresence>{editing && <Panels />}</AnimatePresence>
+      <AnimatePresence>{editing && <Panels side={side} onFlip={() => setSide(side === "left" ? "right" : "left")} />}</AnimatePresence>
       <AnimatePresence>
         {dropping && (
           <motion.div

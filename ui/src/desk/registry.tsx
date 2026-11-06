@@ -39,6 +39,7 @@ import { VIZ_STYLES } from "../components/viz/Waveform";
 import { SCENES } from "../components/visual/scenes";
 import * as W from "./widgets";
 import * as V from "./visuals";
+import { PAINT_MODES } from "./paint";
 
 type Shown = { show?: (props: Record<string, unknown>) => boolean };
 
@@ -49,6 +50,7 @@ export type Field = Shown &
     | { key: string; label: string; type: "number"; min: number; max: number; step: number }
     | { key: string; label: string; type: "text" | "textarea" }
     | { key: string; label: string; type: "asset" }
+    | { key: string; label: string; type: "color" }
   );
 
 const styleIs = (...styles: string[]) => (props: Record<string, unknown>) => styles.includes(String(props.style ?? "bars"));
@@ -78,6 +80,19 @@ const list = (key: string, label: string, options: [string, string][]): Field =>
   type: "select",
   options: options.map(([value, l]) => ({ value, label: l })),
 });
+
+function paintFields(fallback = "ink", { gradient = true, glow = true } = {}): Field[] {
+  const modes = gradient ? PAINT_MODES : PAINT_MODES.filter(([v]) => v !== "gradient");
+  const mode = (...m: string[]) => (p: Record<string, unknown>) => m.includes(String(p.paint ?? p.color ?? fallback));
+  const fields: Field[] = [
+    list("paint", "Color", modes),
+    { key: "paintA", label: "Color 1", type: "color", show: mode("custom", "gradient") },
+    { key: "paintB", label: "Color 2", type: "color", show: mode("gradient") },
+    { ...list("paintDir", "Gradient", [["out", "Quiet to loud"], ["along", "Across"]]), show: mode("gradient") },
+  ];
+  if (glow) fields.push({ key: "glow", label: "Glow", type: "number", min: 0, max: 1, step: 0.05 });
+  return fields;
+}
 
 export const WIDGETS: WidgetDef[] = [
   {
@@ -129,6 +144,7 @@ export const WIDGETS: WidgetDef[] = [
       { key: "thickness", label: "Thickness", type: "number", min: 0.5, max: 3, step: 0.1, show: styleIs("smoke", "memo", "wave") },
       { key: "sensitivity", label: "Sensitivity", type: "number", min: 0.4, max: 2.5, step: 0.05 },
       { key: "fall", label: "Fall speed", type: "number", min: 0.03, max: 0.6, step: 0.01, show: styleIs("bars", "mirror", "wave", "smoke") },
+      ...paintFields(),
     ],
     Component: W.VisualizerWidget,
   },
@@ -384,6 +400,7 @@ export const WIDGETS: WidgetDef[] = [
       { key: "sensitivity", label: "Sensitivity", type: "number", min: 0.4, max: 2.5, step: 0.05 },
       { key: "art", label: "Album art in the middle", type: "toggle" },
       { key: "spin", label: "Spin", type: "toggle" },
+      ...paintFields(),
     ],
     Component: V.RingWidget,
   },
@@ -400,6 +417,7 @@ export const WIDGETS: WidgetDef[] = [
       list("style", "Style", [["analog", "Needles"], ["led", "LED bars"]]),
       list("count", "Meters", [["1", "One"], ["2", "Left and right"]]),
       { key: "sensitivity", label: "Sensitivity", type: "number", min: 0.4, max: 2.5, step: 0.05 },
+      ...paintFields(),
     ],
     Component: V.MetersWidget,
   },
@@ -419,6 +437,7 @@ export const WIDGETS: WidgetDef[] = [
       { key: "speed", label: "Speed", type: "number", min: 0.2, max: 3, step: 0.1 },
       { key: "trail", label: "Fade", type: "number", min: 0.01, max: 0.3, step: 0.01 },
       { key: "react", label: "Move with the music", type: "toggle" },
+      ...paintFields(),
     ],
     Component: V.InkFlowWidget,
   },
@@ -432,10 +451,10 @@ export const WIDGETS: WidgetDef[] = [
     min: { w: 100, h: 80 },
     rotatable: true,
     style: bare,
-    props: { scene: "ripples", color: "ink", sensitivity: 1 },
+    props: { scene: "ripples", paint: "ink", sensitivity: 1 },
     fields: [
       list("scene", "Scene", SCENES.map((s) => [s.value, s.label])),
-      list("color", "Color", [["ink", "Ink"], ["accent", "Accent"], ["art", "Album art"]]),
+      ...paintFields("ink", { gradient: false, glow: false }),
       { key: "sensitivity", label: "Follow the music", type: "number", min: 0.4, max: 2.5, step: 0.05 },
     ],
     Component: V.SceneWidget,
@@ -449,9 +468,9 @@ export const WIDGETS: WidgetDef[] = [
     size: { w: 260, h: 260 },
     min: { w: 80, h: 80 },
     style: bare,
-    props: { color: "art", pulse: 1 },
+    props: { paint: "art", pulse: 1 },
     fields: [
-      list("color", "Color", [["art", "From the album art"], ["accent", "Accent"], ["ink", "Ink"]]),
+      ...paintFields("art", { gradient: false, glow: false }),
       { key: "pulse", label: "Pulse", type: "number", min: 0.2, max: 3, step: 0.1 },
     ],
     Component: V.OrbWidget,

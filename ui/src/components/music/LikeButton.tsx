@@ -1,14 +1,32 @@
 import { AnimatePresence, motion } from "motion/react";
 import { Heart } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "../../lib/api";
+import { useConnect } from "../../store/connect";
 import type { Track } from "../../lib/types";
 import { cn } from "../ui/cn";
 import { Tooltip } from "../ui/Tooltip";
 import { useTrackActions } from "./useTrackActions";
 import { Skin } from "../../theme/skins";
 
-export function LikeButton({ track, size = 18, className }: { track: Track; size?: number; className?: string }) {
+// The player holds its own copy of each song, which can go stale (or never knew), so ask the engine.
+export function useLiked(track: Track, live: boolean) {
+  const linked = useConnect((s) => {
+    const now = s.state?.track;
+    return now && (track.sp_id === now.sp_id || track.id === `sp:${now.sp_id}`) ? (now.linked_id ?? null) : null;
+  });
+  const q = useQuery({
+    queryKey: ["liked", track.id],
+    queryFn: async () => Object.values(await api.liked(linked ? [track.id, `sp:${linked}`] : [track.id])).some(Boolean),
+    enabled: live,
+    staleTime: 20_000,
+  });
+  return live && q.data !== undefined ? q.data : track.state.liked || track.state.saved;
+}
+
+export function LikeButton({ track, size = 18, className, live = false }: { track: Track; size?: number; className?: string; live?: boolean }) {
   const actions = useTrackActions();
-  const liked = track.state.liked || track.state.saved;
+  const liked = useLiked(track, live);
   return (
     <Tooltip label={liked ? "Remove from Liked Songs" : "Add to Liked Songs"}>
       <motion.button
@@ -16,7 +34,7 @@ export function LikeButton({ track, size = 18, className }: { track: Track; size
         aria-pressed={liked}
         onClick={(e) => {
           e.stopPropagation();
-          actions.like(track);
+          actions.like(track, liked);
         }}
         whileTap={{ scale: 0.82 }}
         className={cn(

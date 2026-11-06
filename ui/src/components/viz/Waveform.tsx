@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { BANDS, readLevels, useSystemAudio } from "../../player/levels";
 import { usePrefs } from "../../store/prefs";
 import { cn } from "../ui/cn";
+import { glowOn, paintFill, type Paint } from "../../desk/paint";
 import type { VizStyle } from "./styles";
 
 export { VIZ_STYLES, type VizStyle } from "./styles";
@@ -14,6 +15,7 @@ export type WaveformOptions = {
   fall?: number;
   strands?: number;
   thickness?: number;
+  paint?: Paint;
 };
 
 const fract = (x: number) => x - Math.floor(x);
@@ -102,7 +104,7 @@ export function Waveform({ className, ...options }: WaveformOptions & { classNam
       }
       phase += 0.004 + energy * 0.012;
       quiet = energy < 0.003 && !live ? quiet + 1 : 0;
-      const key = `${style}|${o.bars}|${o.gap}|${o.thickness}|${o.strands}|${color}|${w}x${h}`;
+      const key = `${style}|${o.bars}|${o.gap}|${o.thickness}|${o.strands}|${color}|${o.paint?.key}|${w}x${h}`;
       if (quiet > 90 && key === drawn) {
         raf = requestAnimationFrame(draw);
         return;
@@ -110,13 +112,19 @@ export function Waveform({ className, ...options }: WaveformOptions & { classNam
       drawn = key;
 
       const mid = h / 2;
-      ctx.fillStyle = color;
-      ctx.strokeStyle = color;
+      const fill = o.paint ? paintFill(ctx, o.paint, w, h, style === "bars" ? "bottom" : "middle") : color;
+      ctx.fillStyle = fill;
+      ctx.strokeStyle = fill;
+      if (o.paint) glowOn(ctx, o.paint, dpr);
+      else ctx.shadowBlur = 0;
       if (style === "smoke") {
+        const blur = ctx.shadowBlur;
+        ctx.shadowBlur = 0;
         ctx.globalCompositeOperation = "destination-out";
         ctx.fillStyle = `rgba(0,0,0,${motion === "off" ? 1 : 0.3})`;
         ctx.fillRect(0, 0, w, h);
         ctx.globalCompositeOperation = "source-over";
+        ctx.shadowBlur = blur;
         const strands = Math.round(o.strands ?? 46);
         const points = 150;
         const thick = o.thickness ?? 1;

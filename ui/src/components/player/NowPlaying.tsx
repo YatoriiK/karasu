@@ -260,7 +260,7 @@ export function NowPlaying() {
                         </div>
                       )}
                       <div className="mt-6 flex items-center gap-2">
-                        <LikeButton track={track} size={22} className="h-11 w-11 bg-white/10 text-white hover:bg-white/15" />
+                        <LikeButton track={track} size={22} className="h-11 w-11 bg-white/10 text-white hover:bg-white/15" live />
                         <IconButton label="Not for me" round variant="glass" className={cn("text-white", track.state.disliked && "text-bad")} onClick={() => actions.dislike(track)}>
                           <ThumbsDown size={18} />
                         </IconButton>

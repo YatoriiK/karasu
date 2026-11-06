@@ -1,5 +1,7 @@
 import asyncio
+import socket
 import threading
+import time
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -9,7 +11,7 @@ from ...net import NetError
 from ...sources.spotify import AuthError
 from ...util import now_iso
 from ..state import STATE, ctx
-from .library import known_spotify_id, spotify_id_for, spotify_ids_for
+from .library import known_spotify_id, song_ids, spotify_id_for, spotify_ids_for
 from .setup import start_sync
 
 router = APIRouter(prefix="/api")
@@ -18,6 +20,8 @@ _queue = {"gen": 0, "lock": threading.Lock()}
 QUEUE_NAME = "Karasu"
 QUEUE_NOTE = "Karasu plays your picks from here and refills it on its own."
 NO_DEVICE = "No Spotify device found. Open Spotify on this PC or your phone."
+ASLEEP = "Spotify didn't start playing. Press play in Spotify once, then try again."
+THIS_PC = socket.gethostname().lower()
 
 
 @router.get("/spotify/status")
@@ -69,7 +73,7 @@ def _sp_call(fn):
     except NetError as exc:
         status_code = exc.status or 502
         body = exc.body or ""
-        if "NO_ACTIVE_DEVICE" in body:
+        if "NO_ACTIVE_DEVICE" in body or (status_code == 404 and "device" in body.lower()):
             raise HTTPException(409, "No active Spotify device. Open Spotify on this PC or your phone.")
         if "PREMIUM_REQUIRED" in body:
             raise HTTPException(403, "Spotify says this needs Premium.")
@@ -94,7 +98,8 @@ def _normalize(state):
         "device": {"id": device.get("id"), "name": device.get("name"), "type": device.get("type"),
                    "volume": device.get("volume_percent")},
         "track": {
-            "sp_id": item.get("id"), "uri": item.get("uri"), "title": item.get("name"),
+            "sp_id": item.get("id"), "linked_id": (item.get("linked_from") or {}).get("id"),
+            "uri": item.get("uri"), "title": item.get("name"),
             "artist": ", ".join(a.get("name") for a in item.get("artists") or []),
             "album": album.get("name"), "duration_ms": item.get("duration_ms"),
             "image": images[0]["url"] if images else None,
@@ -132,13 +137,82 @@ def _context_uri(c, context):
     return None
 
 
+def _asleep(exc):
+    # A Spotify app that sat idle stays in the device list but stops listening: commands get 404, 502 or nothing.
+    return exc.status in (None, 404, 500, 502, 503) or "NO_ACTIVE_DEVICE" in (exc.body or "")
+
+
+def _now(c):
+    try:
+        return c.sp.player("GET", "/me/player", params={"additional_types": "track"}, timeout=6.0) or {}
+    except NetError:
+        return {}
+
+
+def _wait(c, test, seconds):
+    end = time.monotonic() + seconds
+    while True:
+        state = _now(c)
+        if state and test(state):
+            return state
+        if time.monotonic() >= end:
+            return None
+        time.sleep(0.4)
+
+
+def _on(device_id):
+    return lambda s: (s.get("device") or {}).get("id") == device_id
+
+
 def _pick_device(devices, wanted):
-    if wanted:
-        return wanted
-    if not devices or any(d.get("is_active") for d in devices):
-        return None
-    computers = [d for d in devices if (d.get("type") or "").lower() == "computer"]
-    return (computers or devices)[0].get("id")
+    usable = [d for d in devices if d.get("id") and not d.get("is_restricted")]
+
+    def computer(d):
+        return (d.get("type") or "").lower() == "computer"
+
+    for test in (lambda d: d["id"] == wanted, lambda d: d.get("is_active"),
+                 lambda d: computer(d) and (d.get("name") or "").lower() == THIS_PC, computer):
+        found = next((d for d in usable if test(d)), None)
+        if found:
+            return found
+    return usable[0] if usable else None
+
+
+def _transfer(c, device_id):
+    try:
+        c.sp.player("PUT", "/me/player", body={"device_ids": [device_id], "play": False})
+    except NetError as exc:
+        if not _asleep(exc):
+            raise
+
+
+def _wake(c, wanted=None):
+    devices = c.sp.player("GET", "/me/player/devices", timeout=6.0).get("devices") or []
+    device = _pick_device(devices, wanted)
+    if not device:
+        raise HTTPException(409, NO_DEVICE)
+    if not device.get("is_active"):
+        _transfer(c, device["id"])
+        _wait(c, _on(device["id"]), 2.5)
+    return device["id"]
+
+
+def _start(c, device_id, **play):
+    # Spotify can say yes and then play nothing, so only a playing state on that device counts.
+    playing = lambda s: _on(device_id)(s) and s.get("is_playing")
+    for attempt in range(2):
+        try:
+            c.sp.play(device_id=device_id, **play)
+        except NetError as exc:
+            if not _asleep(exc):
+                raise
+        else:
+            if _wait(c, playing, 3.0):
+                return
+        if attempt == 0:
+            _transfer(c, device_id)
+            time.sleep(0.6)
+    raise HTTPException(409, ASLEEP)
 
 
 def _window(c, track_ids, offset):
@@ -215,17 +289,13 @@ async def play(body: PlayBody):
     c = ctx()
 
     def go():
-        devices = c.sp.devices()
-        if not devices and not body.device_id:
-            raise HTTPException(409, NO_DEVICE)
-        device_id = _pick_device(devices, body.device_id)
+        device_id = _wake(c, body.device_id)
         context_uri = _context_uri(c, body.context)
         if context_uri:
             try:
-                if c.sp.play(context_uri=context_uri, offset=max(0, body.offset), position_ms=body.position_ms,
-                             device_id=device_id) is not None:
-                    _shuffle(c, body.shuffle, device_id)
-                    return {"ok": True, "matched": None, "context": context_uri}
+                _start(c, device_id, context_uri=context_uri, offset=max(0, body.offset), position_ms=body.position_ms)
+                _shuffle(c, body.shuffle, device_id)
+                return {"ok": True, "matched": None, "context": context_uri, "device_id": device_id}
             except NetError as exc:
                 if exc.status not in (400, 403):
                     raise
@@ -238,13 +308,12 @@ async def play(body: PlayBody):
             gen = _queue["gen"]
             pid = _fill_queue(c, uris)
         queue_uri = f"spotify:playlist:{pid}"
-        if c.sp.play(context_uri=queue_uri, offset=sum(1 for _, sp_id in slots[:first] if sp_id),
-                     position_ms=body.position_ms, device_id=device_id) is None:
-            raise HTTPException(404, "Spotify couldn't start that song")
+        _start(c, device_id, context_uri=queue_uri, offset=sum(1 for _, sp_id in slots[:first] if sp_id),
+               position_ms=body.position_ms)
         _shuffle(c, body.shuffle, device_id)
         if any(not known for known, _ in slots[first + 1:]):
             threading.Thread(target=_complete_queue, args=(c, gen, pid, ids, slots, first), daemon=True).start()
-        return {"ok": True, "matched": len(uris), "context": queue_uri}
+        return {"ok": True, "matched": len(uris), "context": queue_uri, "device_id": device_id}
 
     return await asyncio.to_thread(_sp_call, go)
 
@@ -252,37 +321,67 @@ async def play(body: PlayBody):
 class Command(BaseModel):
     action: str
     value: str | int | float | bool | None = None
+    device_id: str | None = None
+
+
+ROUTES = {
+    "pause": ("PUT", "/me/player/pause", None),
+    "next": ("POST", "/me/player/next", None),
+    "previous": ("POST", "/me/player/previous", None),
+    "seek": ("PUT", "/me/player/seek", lambda v: {"position_ms": int(v)}),
+    "volume": ("PUT", "/me/player/volume", lambda v: {"volume_percent": int(v)}),
+    "shuffle": ("PUT", "/me/player/shuffle", lambda v: {"state": str(bool(v)).lower()}),
+    "repeat": ("PUT", "/me/player/repeat", lambda v: {"state": str(v)}),
+    "queue": ("POST", "/me/player/queue", lambda uri: {"uri": uri}),
+}
+
+
+def _resume(c, wanted):
+    state = _now(c)
+    if not state.get("item"):
+        # After a long pause Spotify forgets what was playing, so there's nothing left to resume.
+        raise HTTPException(410, "Nothing to resume")
+    device_id = _wake(c, wanted or (state.get("device") or {}).get("id"))
+    if state.get("is_playing") and _on(device_id)(state):
+        return device_id
+    _start(c, device_id)
+    return device_id
+
+
+def _send(c, action, value, wanted):
+    method, path, params = ROUTES[action]
+    params = params(value) if params else {}
+    try:
+        c.sp.player(method, path, params=params or None)
+        return None
+    except NetError as exc:
+        if not _asleep(exc):
+            raise
+        if action == "pause":
+            return None
+    device_id = _wake(c, wanted)
+    c.sp.player(method, path, params={**params, "device_id": device_id})
+    return device_id
 
 
 @router.post("/player/spotify/command")
 async def command(body: Command):
     c = ctx()
-    routes = {
-        "pause": ("PUT", "/me/player/pause", None),
-        "resume": ("PUT", "/me/player/play", None),
-        "next": ("POST", "/me/player/next", None),
-        "previous": ("POST", "/me/player/previous", None),
-        "seek": ("PUT", "/me/player/seek", lambda v: {"position_ms": int(v)}),
-        "volume": ("PUT", "/me/player/volume", lambda v: {"volume_percent": int(v)}),
-        "shuffle": ("PUT", "/me/player/shuffle", lambda v: {"state": str(bool(v)).lower()}),
-        "repeat": ("PUT", "/me/player/repeat", lambda v: {"state": str(v)}),
-    }
     if body.action == "transfer":
-        await asyncio.to_thread(_sp_call, lambda: c.sp.player_command("PUT", "/me/player",
-                                                                      body={"device_ids": [str(body.value)], "play": True}))
+        await asyncio.to_thread(_sp_call, lambda: c.sp.player("PUT", "/me/player",
+                                                              body={"device_ids": [str(body.value)], "play": True}))
         return {"ok": True}
+    if body.action == "resume":
+        return {"ok": True, "device_id": await asyncio.to_thread(_sp_call, lambda: _resume(c, body.device_id))}
+    if body.action not in ROUTES:
+        raise HTTPException(400, "unknown action")
+    value = body.value
     if body.action == "queue":
-        sp_ids = await asyncio.to_thread(spotify_ids_for, c, [str(body.value)])
+        sp_ids = await asyncio.to_thread(spotify_ids_for, c, [str(value)])
         if not sp_ids:
             raise HTTPException(404, "Not on Spotify")
-        await asyncio.to_thread(_sp_call, lambda: c.sp.player_command("POST", "/me/player/queue",
-                                                                      params={"uri": f"spotify:track:{sp_ids[0]}"}))
-        return {"ok": True}
-    if body.action not in routes:
-        raise HTTPException(400, "unknown action")
-    method, path, params = routes[body.action]
-    await asyncio.to_thread(_sp_call, lambda: c.sp.player_command(method, path, params=params(body.value) if params else None))
-    return {"ok": True}
+        value = f"spotify:track:{sp_ids[0]}"
+    return {"ok": True, "device_id": await asyncio.to_thread(_sp_call, lambda: _send(c, body.action, value, body.device_id))}
 
 
 class SaveBody(BaseModel):
@@ -312,8 +411,12 @@ async def unsave(body: SaveBody):
         sp_ids = spotify_ids_for(c, [body.id])
         if not sp_ids:
             raise HTTPException(404, "This song isn't on Spotify")
-        c.sp.unsave_tracks([f"spotify:track:{sp_ids[0]}"])
-        c.db.x("delete from saved where track_id=?", (sp_ids[0],))
+        # The like may sit on another copy of the song, so take it off every copy that has one.
+        others = {s for s in song_ids(c.db, body.id)[0] if c.db.one("select 1 from saved where track_id=?", (s,))}
+        gone = [sp_ids[0], *sorted(others - {sp_ids[0]})]
+        c.sp.unsave_tracks([f"spotify:track:{s}" for s in gone])
+        for s in gone:
+            c.db.x("delete from saved where track_id=?", (s,))
         return {"ok": True, "sp_id": sp_ids[0]}
 
     return await asyncio.to_thread(_sp_call, go)

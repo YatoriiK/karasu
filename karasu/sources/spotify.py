@@ -8,6 +8,7 @@ import webbrowser
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import parse_qs, urlencode, urlsplit
 
+import httpx
 import keyring
 
 from ..net import NetError
@@ -290,6 +291,22 @@ class Spotify:
     def devices(self):
         return (self.call("GET", "/me/player/devices") or {}).get("devices") or []
 
+    def player(self, method, path, params=None, body=None, timeout=10.0):
+        # One try, no retries: a sleeping Spotify answers 404 or 502, and the caller has to know right away.
+        try:
+            resp = self.net.client.request(method, API + path, params=params, json=body, timeout=timeout,
+                                           headers={"Authorization": f"Bearer {self.token()}"})
+        except httpx.TransportError as exc:
+            raise NetError(f"Spotify didn't answer ({type(exc).__name__})")
+        if resp.status_code >= 400:
+            raise NetError(f"Spotify HTTP {resp.status_code}", resp.status_code, resp.text[:500])
+        if not resp.content:
+            return {}
+        try:
+            return resp.json()
+        except ValueError:
+            return {}
+
     def play(self, uris=None, offset=None, position_ms=None, device_id=None, context_uri=None, offset_uri=None):
         body = {}
         if context_uri:
@@ -303,8 +320,7 @@ class Spotify:
         if position_ms is not None:
             body["position_ms"] = int(position_ms)
         params = {"device_id": device_id} if device_id else None
-        return self.net.request("PUT", API + "/me/player/play", params=params, json_body=body or None,
-                                headers={"Authorization": f"Bearer {self.token()}"})
+        return self.player("PUT", "/me/player/play", params=params, body=body or None)
 
     def player_command(self, method, path, params=None, body=None):
         return self.net.request(method, API + path, params=params, json_body=body,

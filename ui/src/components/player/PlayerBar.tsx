@@ -207,7 +207,7 @@ export function PlayerBar() {
                 </>
               )}
             </div>
-            {track && <LikeButton track={track} className="shrink-0" />}
+            {track && <LikeButton track={track} className="shrink-0" live />}
           </div>
         </TrackContextMenu>
 
